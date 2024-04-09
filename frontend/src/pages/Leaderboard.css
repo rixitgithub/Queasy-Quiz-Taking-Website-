@@ -1,0 +1,26 @@
+.leaderboard-container {
+  margin: 20px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.user-item {
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.first {
+  background-color: #ffd700; /* Apply yellow background color to the first user */
+  font-weight: bold; /* Make the text bold */
+}
+
+.second {
+  background-color: #c0c0c0; /* Apply silver background color to the second user */
+}
+
+.third {
+  background-color: #cd7f32; /* Apply bronze background color to the third user */
+}
