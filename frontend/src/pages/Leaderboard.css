@@ -1,26 +1,108 @@
-.leaderboard-container {
-  margin: 20px;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.user-item {
-  margin-bottom: 10px;
+.stats-container {
+  display: flex;
+  justify-content: space-between;
   padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #c9f0ff, transparent);
 }
 
-.first {
-  background-color: #ffd700; /* Apply yellow background color to the first user */
-  font-weight: bold; /* Make the text bold */
+.card {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  margin: 0 10px; /* Add margin to create space between cards */
+  background-color: #fff; /* White background color for cards */
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Box shadow for cards */
 }
 
-.second {
-  background-color: #c0c0c0; /* Apply silver background color to the second user */
+.card h3 {
+  margin-bottom: 5px;
 }
 
-.third {
-  background-color: #cd7f32; /* Apply bronze background color to the third user */
+.card p {
+  margin: 0;
+}
+
+.leaderboard-container {
+  margin: 20px auto;
+  max-width: 800px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid #ddd;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #f5f5f5;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.action-icon {
+  margin-right: 5px;
+}
+
+.back-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff; /* Blue background color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.back-button span {
+  color: #fff; /* White color for the arrow */
+  font-size: 24px;
 }

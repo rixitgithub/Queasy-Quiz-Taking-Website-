@@ -886,6 +886,7 @@ app.get("/leaderboard/:uniqueCode", authenticateJwt, async (req, res) => {
         return {
           userId: userId.toString(),
           username: `${user.fname} ${user.lname}`,
+          email: user.email, // Include user email in the response
           totalMarks,
         };
       })

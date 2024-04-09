@@ -54,7 +54,7 @@ const Question = () => {
             }
           );
           const questionData = await questionResponse.json();
-
+          console.log(questionData);
           setQuiz(questionData.quiz);
           setQuestion(questionData.question);
           setQuestionIds(questionData.questionIds);
