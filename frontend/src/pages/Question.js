@@ -108,9 +108,10 @@ const Question = () => {
         if (prevTime === 0) {
           clearInterval(timerInterval);
           setIsTimeUp(true);
+          setRemainingTime(0);
           setShowPopup(true);
           saveAnswer();
-          return 0;
+          return 0; // Set remaining time to 0 when time is up
         } else {
           return prevTime - 1;
         }
@@ -276,7 +277,7 @@ const Question = () => {
                 position: "absolute",
                 top: "10%",
                 left: "96%",
-                transform: "translate(-100%, -50%)",
+                transform: "translate(-50%, -50%)",
                 textAlign: "center",
               }}
             >
@@ -308,7 +309,10 @@ const Question = () => {
           ) : (
             <div style={{ marginBottom: "20px" }}>
               <div style={{ marginBottom: "20px" }}>
-                <Typography variant="h5" style={{ textAlign: "left" }}>
+                <Typography
+                  variant="h5"
+                  style={{ textAlign: "left", marginRight: "7rem" }}
+                >
                   Question {questionIds.indexOf(questionId) + 1}:{" "}
                   {question && question.text}
                 </Typography>
