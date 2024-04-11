@@ -13,9 +13,19 @@ import {
   Grid,
   Paper,
   Box,
+  Card,
+  CardContent,
+  ThemeProvider,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-let method;
+import { createTheme } from "@mui/material/styles";
+import getLPTheme from "../getLPTheme"; // Assuming you have the theme defined in a separate file
+import { alpha } from "@mui/material";
+import AppAppBar from "../components/AppAppBar";
+import { CheckCircleOutline, RadioButtonUnchecked } from "@mui/icons-material";
+import Footer from "../components/Footer";
+
+import Divider from "@mui/material/Divider";
 
 const CreateQuiz = () => {
   const [title, setTitle] = useState("");
@@ -28,16 +38,20 @@ const CreateQuiz = () => {
   const [error, setError] = useState("");
   const [updateIndex, setUpdateIndex] = useState(-1); // Index of the question to update
   const [assignMarks, setAssignMarks] = useState(false); // Option to assign marks
-  const [passingMarks, setPassingMarks] = useState(0); // Passing marks
+  const [passingMarks, setPassingMarks] = useState(); // Passing marks
   const [questionMarks, setQuestionMarks] = useState(1); // Marks for each question
   const navigate = useNavigate();
+
+  const [mode, setMode] = React.useState("light");
+
+  const toggleColorMode = () => {
+    setMode((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   const handleCheckboxChange = (e) => {
     const newValue = e.target.checked;
     console.log("Checkbox value:", newValue);
     setAssignMarks(newValue);
-    method = newValue;
-    console.log("method: ", method);
     if (newValue) {
       // If checked, set question type to mcq
       setQuestionType("mcq");
@@ -116,7 +130,7 @@ const CreateQuiz = () => {
       const requestBody = {
         title,
         passingMarks,
-        autoAssignMarks: method, // Send the value of assignMarks directly
+        autoAssignMarks: assignMarks, // Send the value of assignMarks directly
         questions,
       };
 
@@ -143,163 +157,245 @@ const CreateQuiz = () => {
   };
 
   return (
-    <Container maxWidth="md">
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-
-      <Box mt={4} mb={4}>
-        <Typography variant="h4">Create Quiz</Typography>
-        <FormControlLabel
-          control={
-            <Checkbox checked={assignMarks} onChange={handleCheckboxChange} />
-          }
-          label="Assign Marks to Students after Quiz"
-        />
-      </Box>
-      <TextField
-        label="Title"
-        fullWidth
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        variant="outlined"
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="Passing Marks"
-        fullWidth
-        type="number"
-        value={passingMarks}
-        onChange={(e) => setPassingMarks(e.target.value)}
-        variant="outlined"
-        sx={{ mb: 2 }}
-      />
-      <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-        <InputLabel id="question-type-label">Question Type</InputLabel>
-        <Select
-          labelId="question-type-label"
-          id="question-type"
-          value={questionType}
-          onChange={(e) => {
-            setQuestionType(e.target.value);
-            if (e.target.value === "qna") {
-              setAssignMarks(false);
-            }
+    <ThemeProvider theme={createTheme(getLPTheme("light"))}>
+      <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+      <Box
+        id="hero"
+        sx={(theme) => ({
+          width: "100%",
+          backgroundImage:
+            theme.palette.mode === "light"
+              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+          backgroundSize: "100% 20%",
+          backgroundRepeat: "no-repeat",
+        })}
+      >
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <Container
+          maxWidth="md"
+          mt={10}
+          mb={20}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
-          label="Question Type"
         >
-          <MenuItem value="mcq">Multiple Choice Question</MenuItem>
-          {!assignMarks && <MenuItem value="qna">Question & Answer</MenuItem>}
-        </Select>
-      </FormControl>
-      <TextField
-        label="Question Text"
-        fullWidth
-        value={questionText}
-        onChange={(e) => setQuestionText(e.target.value)}
-        variant="outlined"
-        sx={{ mb: 2 }}
-      />
-      {questionType === "mcq" && (
-        <>
-          {options.map((option, index) => (
-            <Grid container spacing={2} key={index} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
+          <Box>
+            <Typography variant="h4">Create Quiz</Typography>
+            <Box mt={0.5} mb={2.5} borderBottom={1} borderColor="grey.400" />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={assignMarks}
+                  onChange={handleCheckboxChange}
+                />
+              }
+              label="Assign Marks to Students after Quiz"
+            />
+            <Grid container spacing={1} alignItems="center" sx={{ mb: 2 }}>
+              <Grid item xs={7.79}>
                 <TextField
-                  label={`Option ${index + 1}`}
+                  label="Title"
                   fullWidth
-                  value={option}
-                  onChange={(e) => {
-                    const newOptions = [...options];
-                    newOptions[index] = e.target.value;
-                    setOptions(newOptions);
-                  }}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={6} sx={{ display: "flex", alignItems: "center" }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={correctOptions.includes(index)}
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        if (isChecked) {
-                          setCorrectOptions((prevOptions) => [
-                            ...prevOptions,
-                            index,
-                          ]);
-                        } else {
-                          setCorrectOptions((prevOptions) =>
-                            prevOptions.filter((opt) => opt !== index)
-                          );
-                        }
-                      }}
-                    />
-                  }
-                  label="Correct"
+              <Grid item xs={4}>
+                <TextField
+                  label="Passing Marks"
+                  fullWidth
+                  type="number"
+                  value={passingMarks}
+                  onChange={(e) => setPassingMarks(e.target.value)}
+                  variant="outlined"
                 />
               </Grid>
             </Grid>
-          ))}
-        </>
-      )}
-      <TextField
-        label="Time Limit (seconds)"
-        fullWidth
-        type="number"
-        value={timeLimit}
-        onChange={(e) => setTimeLimit(e.target.value)}
-        variant="outlined"
-        sx={{ mb: 2 }}
-      />
-      <TextField
-        label="Marks"
-        fullWidth
-        type="number"
-        value={questionMarks}
-        onChange={(e) => setQuestionMarks(e.target.value)}
-        variant="outlined"
-        sx={{ mb: 2 }}
-      />
-      <Button variant="contained" onClick={addQuestion} sx={{ mr: 2 }}>
-        {updateIndex !== -1 ? "Update Question" : "Add Question"}
-      </Button>
-      <Button variant="contained" onClick={createQuiz}>
-        Create Quiz
-      </Button>
-      {error && (
-        <Typography variant="body1" color="error" mt={2}>
-          {error}
-        </Typography>
-      )}
-      <Box mt={4}>
-        <Typography variant="h6">Quiz Preview</Typography>
-        {questions.map((question, index) => (
-          <Paper key={index} elevation={3} sx={{ p: 2, mt: 2 }}>
-            <Typography variant="subtitle1">{`Question ${index + 1}: ${
-              question.text
-            }`}</Typography>
-            {question.options && (
-              <ul>
-                {question.options.map((opt, optIndex) => (
-                  <li key={optIndex}>{opt}</li>
-                ))}
-              </ul>
-            )}
-            <Typography variant="body1">Marks: {question.marks}</Typography>
-            <Button onClick={() => updateQuestion(index)} sx={{ mr: 1 }}>
-              Update
-            </Button>
-            <Button onClick={() => removeQuestion(index)} color="error">
-              Delete {assignMarks}
-            </Button>
-          </Paper>
-        ))}
+            <Card mt={10}>
+              <CardContent>
+                <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                  <InputLabel id="question-type-label">
+                    Question Type
+                  </InputLabel>
+                  <Select
+                    labelId="question-type-label"
+                    id="question-type"
+                    value={questionType}
+                    onChange={(e) => {
+                      setQuestionType(e.target.value);
+                      if (e.target.value === "qna") {
+                        setAssignMarks(false);
+                      }
+                    }}
+                    label="Question Type"
+                  >
+                    <MenuItem value="mcq">Multiple Choice Question</MenuItem>
+                    {!assignMarks && (
+                      <MenuItem value="qna">Question & Answer</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="Question Text"
+                  fullWidth
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                />
+                {questionType === "mcq" && (
+                  <>
+                    {options.map((option, index) => (
+                      <Grid container spacing={2} key={index} sx={{ mb: 2 }}>
+                        <Grid item xs={6}>
+                          <TextField
+                            label={`Option ${index + 1}`}
+                            fullWidth
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...options];
+                              newOptions[index] = e.target.value;
+                              setOptions(newOptions);
+                            }}
+                            variant="outlined"
+                          />
+                        </Grid>
+                        <Grid
+                          item
+                          xs={6}
+                          sx={{ display: "flex", alignItems: "center" }}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={correctOptions.includes(index)}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+                                  if (isChecked) {
+                                    setCorrectOptions((prevOptions) => [
+                                      ...prevOptions,
+                                      index,
+                                    ]);
+                                  } else {
+                                    setCorrectOptions((prevOptions) =>
+                                      prevOptions.filter((opt) => opt !== index)
+                                    );
+                                  }
+                                }}
+                              />
+                            }
+                            label="Correct"
+                          />
+                        </Grid>
+                      </Grid>
+                    ))}
+                  </>
+                )}
+                <TextField
+                  label="Time Limit (seconds)"
+                  fullWidth
+                  type="number"
+                  value={timeLimit}
+                  onChange={(e) => setTimeLimit(e.target.value)}
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  label="Marks"
+                  fullWidth
+                  type="number"
+                  value={questionMarks}
+                  onChange={(e) => setQuestionMarks(e.target.value)}
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={addQuestion}
+                  sx={{ mr: 2 }}
+                >
+                  {updateIndex !== -1 ? "Update Question" : "Add Question"}
+                </Button>
+                <Button variant="contained" onClick={createQuiz}>
+                  Create Quiz
+                </Button>
+                {error && (
+                  <Typography variant="body1" color="error" mt={2}>
+                    {error}
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+            <Box mt={4} mb={30}>
+              <Typography variant="h6">Quiz Preview</Typography>
+              {questions.map((question, index) => (
+                <Paper key={index} elevation={3} sx={{ p: 2, mt: 2 }}>
+                  <Typography variant="subtitle1">{`Question ${index + 1}: ${
+                    question.text
+                  }`}</Typography>
+                  {question.options && (
+                    <ul>
+                      {question.options.map((opt, optIndex) => (
+                        <li key={optIndex} style={{ listStyle: "none" }}>
+                          {question.correctOptions.includes(optIndex) ? (
+                            <CheckCircleOutline
+                              style={{
+                                verticalAlign: "middle",
+                                marginRight: "5px",
+                                color: "green",
+                              }}
+                            />
+                          ) : (
+                            <RadioButtonUnchecked
+                              style={{
+                                verticalAlign: "middle",
+                                marginRight: "5px",
+                                color: "red",
+                              }}
+                            />
+                          )}
+                          {opt}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Typography variant="body1">
+                    Marks: {question.marks}
+                  </Typography>
+                  <Typography variant="body1">
+                    Time Limit: {question.timeLimit} seconds
+                  </Typography>
+                  <Button onClick={() => updateQuestion(index)} sx={{ mr: 1 }}>
+                    Update
+                  </Button>
+                  <Button onClick={() => removeQuestion(index)} color="error">
+                    Delete
+                  </Button>
+                </Paper>
+              ))}
+            </Box>
+          </Box>
+        </Container>
+
+        <Divider />
+        <Footer />
       </Box>
-    </Container>
+    </ThemeProvider>
   );
 };
 

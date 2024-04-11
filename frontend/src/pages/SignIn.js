@@ -5,6 +5,7 @@ import {
   TextField,
   Typography,
   Divider,
+  IconButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -13,12 +14,16 @@ import Box from "@mui/material/Box";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
+import { alpha } from "@mui/material";
 
 export default function SignIn() {
   const [mode, setMode] = React.useState("light");
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleSignIn = () => {
@@ -58,67 +63,95 @@ export default function SignIn() {
     setMode((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword((prevShowPassword) => !prevShowPassword);
+  };
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
-      <CssBaseline />
-      <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
-      <Container
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          pt: { xs: 14, sm: 20 },
-          pb: { xs: 8, sm: 12 },
-        }}
+      <Box
+        id="hero"
+        sx={(theme) => ({
+          width: "100%",
+          backgroundImage:
+            theme.palette.mode === "light"
+              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+          backgroundSize: "100% 20%",
+          backgroundRepeat: "no-repeat",
+        })}
       >
-        <Box
+        <CssBaseline />
+        <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+        <Container
           sx={{
-            mt: { xs: 1, sm: 3 },
-            alignSelf: "center",
-            width: "50%",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            pt: { xs: 14, sm: 20 },
+            pb: { xs: 8, sm: 12 },
           }}
         >
-          <Typography variant="h4" sx={{ mb: 2 }}>
-            SIGN IN
-          </Typography>
-
-          <Divider sx={{ mb: 2 }} />
-          <Container sx={{ mb: 2 }}>
-            <TextField
-              id="email"
-              label="Email Address"
-              size="small"
-              fullWidth
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              id="password"
-              label="Password"
-              type="password"
-              variant="outlined"
-              size="small"
-              fullWidth
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-          </Container>
-          {error && (
-            <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-              {error}
+          <Box
+            sx={{
+              mt: { xs: 1, sm: 3 },
+              alignSelf: "center",
+              width: "50%",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              padding: "20px",
+            }}
+          >
+            <Typography variant="h4" sx={{ mb: 2 }}>
+              SIGN IN
             </Typography>
-          )}
-          <Button variant="contained" color="primary" onClick={handleSignIn}>
-            Sign In
-          </Button>
-        </Box>
-      </Container>
+
+            <Divider sx={{ mb: 2 }} />
+            <Container sx={{ mb: 2 }}>
+              <TextField
+                id="email"
+                label="Email Address"
+                size="small"
+                fullWidth
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                id="password"
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton
+                      onClick={handleTogglePasswordVisibility}
+                      edge="end"
+                      aria-label="toggle password visibility"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  ),
+                }}
+              />
+            </Container>
+            {error && (
+              <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+            )}
+            <Button variant="contained" color="primary" onClick={handleSignIn}>
+              Sign In
+            </Button>
+          </Box>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 }

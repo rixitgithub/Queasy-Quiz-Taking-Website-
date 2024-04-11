@@ -108,9 +108,19 @@ function AppAppBar({ mode, toggleColorMode }) {
                   <MenuItem
                     onClick={() => navigate("/dash")}
                     sx={{ py: "6px", px: "12px" }}
+                    pl={3}
                   >
-                    <Typography variant="body2" color="text.primary" ml={5}>
+                    <Typography variant="body2" color="text.primary">
                       Dashboard
+                    </Typography>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => navigate("/create")}
+                    sx={{ py: "6px", px: "12px" }}
+                    pl={3}
+                  >
+                    <Typography variant="body2" color="text.primary">
+                      Create a Quiz
                     </Typography>
                   </MenuItem>
                 </Box>
@@ -166,21 +176,6 @@ function AppAppBar({ mode, toggleColorMode }) {
                       flexGrow: 1,
                     }}
                   >
-                    <MenuItem onClick={() => scrollToSection("features")}>
-                      Features
-                    </MenuItem>
-                    <MenuItem onClick={() => scrollToSection("testimonials")}>
-                      Testimonials
-                    </MenuItem>
-                    <MenuItem onClick={() => scrollToSection("highlights")}>
-                      Highlights
-                    </MenuItem>
-                    <MenuItem onClick={() => scrollToSection("pricing")}>
-                      Pricing
-                    </MenuItem>
-                    <MenuItem onClick={() => scrollToSection("faq")}>
-                      FAQ
-                    </MenuItem>
                     <Divider />
                     <MenuItem>
                       <Button

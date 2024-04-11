@@ -8,20 +8,22 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
+import Logo from "../assets/Logo_new.png";
 import FacebookIcon from "@mui/icons-material/GitHub";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/X";
 
 const logoStyle = {
-  width: "140px",
+  width: "100px",
   height: "auto",
+  ml: "4",
 };
 
 function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" mt={1}>
       {"Copyright © "}
-      <Link href="https://mui.com/">Sitemark&nbsp;</Link>
+      <Link href="https://queazy.com/">queazy&nbsp;</Link>
       {new Date().getFullYear()}
     </Typography>
   );
@@ -56,14 +58,8 @@ export default function Footer() {
           }}
         >
           <Box sx={{ width: { xs: "100%", sm: "60%" } }}>
-            <Box sx={{ ml: "-15px" }}>
-              <img
-                src={
-                  "https://assets-global.website-files.com/61ed56ae9da9fd7e0ef0a967/61f12e6faf73568658154dae_SitemarkDefault.svg"
-                }
-                style={logoStyle}
-                alt="logo of sitemark"
-              />
+            <Box sx={{ ml: "0px" }}>
+              <img src={Logo} style={logoStyle} alt="logo of queazy" />
             </Box>
             <Typography variant="body2" fontWeight={600} gutterBottom>
               Newsletter

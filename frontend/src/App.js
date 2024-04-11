@@ -11,7 +11,7 @@ import Update from "./pages/Update";
 import TakeQuiz from "./pages/TakeQuiz";
 import Quiz from "./pages/Quiz";
 import Question from "./pages/Question";
-import EndQuiz from "./EndQuiz";
+import EndQuiz from "./pages/EndQuiz";
 import Results from "./pages/Results";
 import UserResult from "./pages/UserResult";
 import PageNotFound from "./pages/PageNotFound";
@@ -21,7 +21,6 @@ function App() {
   return (
     <Router>
       <div>
-        <AppAppBar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<SignUp />} />

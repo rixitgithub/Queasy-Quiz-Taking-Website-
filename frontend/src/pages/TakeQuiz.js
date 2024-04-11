@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Container, Typography, Button, CircularProgress } from "@mui/material";
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
 import Alert from "@mui/material/Alert";
 import loadingVideo from "../assets/loader.mp4";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import AppAppBar from "../components/AppAppBar";
 import Question from "./Question.js";
+import { alpha } from "@mui/material";
 
 import getLPTheme from "../getLPTheme";
 
@@ -100,47 +107,90 @@ const TakeQuiz = () => {
 
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
-      <CssBaseline />
-      <Container
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
+      <Box
+        id="hero"
+        sx={(theme) => ({
+          width: "100%",
+          backgroundImage:
+            theme.palette.mode === "light"
+              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+          backgroundSize: "100% 20%",
+          backgroundRepeat: "no-repeat",
+        })}
       >
-        <AppAppBar />
-        {quizDetails && (
-          <>
-            <Typography variant="h2">{quizDetails.name}</Typography>
-            <Typography variant="subtitle1">
-              Created by: {quizDetails.creator}
-            </Typography>
-            <Typography variant="subtitle1">
-              Number of Questions: {quizDetails.numQuestions}
-            </Typography>
-            {isOwner ? (
-              <Typography variant="subtitle1">You are the owner</Typography>
-            ) : (
-              <>
-                {error && <Alert severity="error">{error}</Alert>}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleTakeQuiz}
-                  sx={{ mt: 2 }}
-                >
-                  Take Quiz
-                </Button>
-              </>
-            )}
-            {questionId && (
-              <Question questionId={questionId} questionIds={questionIds} />
-            )}
-          </>
-        )}
-      </Container>
+        <CssBaseline />
+
+        <Container
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <AppAppBar />
+          {console.log("beofre the token check")}
+          {console.log(localStorage.getItem("token") === null)}
+          {localStorage.getItem("token") == null ? (
+            <Container
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh",
+              }}
+            >
+              {console.log("in the token check")}
+              <Typography variant="h4" color="error">
+                You are not signed in.
+              </Typography>
+              <Typography variant="body1">
+                Please sign in to take the quiz.
+              </Typography>
+            </Container>
+          ) : (
+            <>
+              {quizDetails && (
+                <>
+                  <Typography variant="h2">{quizDetails.name}</Typography>
+                  <Typography variant="subtitle1">
+                    Created by: {quizDetails.creator}
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    Number of Questions: {quizDetails.numQuestions}
+                  </Typography>
+                  {isOwner ? (
+                    <Typography variant="subtitle1">
+                      You are the owner
+                    </Typography>
+                  ) : (
+                    <>
+                      {error && <Alert severity="error">{error}</Alert>}
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleTakeQuiz}
+                        sx={{ mt: 2 }}
+                      >
+                        Take Quiz
+                      </Button>
+                    </>
+                  )}
+                  {questionId && (
+                    <Question
+                      questionId={questionId}
+                      questionIds={questionIds}
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 };

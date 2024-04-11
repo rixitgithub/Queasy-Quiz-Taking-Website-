@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  TextField,
 } from "@mui/material";
 
 const Question = () => {
@@ -18,16 +19,16 @@ const Question = () => {
   const [remainingTime, setRemainingTime] = useState(null);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [options, setOptions] = useState([]); // State to store shuffled options
-  const [originalOptions, setOriginalOptions] = useState([]); // State to store original options order
-  const [answer, setAnswer] = useState(""); // State to store user's answer
-  const [attemptedQuiz, setAttemptedQuiz] = useState(false); // State to check if quiz is attempted
+  const [options, setOptions] = useState([]);
+  const [originalOptions, setOriginalOptions] = useState([]);
+  const [answer, setAnswer] = useState("");
+  const [attemptedQuiz, setAttemptedQuiz] = useState(false);
+  const [qnaAnswer, setQnaAnswer] = useState(""); // Added state for QNA answer
   const { uniqueCode, questionId } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Check if the user has attempted the quiz
         const response = await fetch(
           `http://localhost:1234/results/${uniqueCode}`,
           {
@@ -38,11 +39,11 @@ const Question = () => {
           }
         );
         const data = await response.json();
+        console.log("results", data);
         if (response.ok) {
-          setAttemptedQuiz(data.attempted); // Set attemptedQuiz state based on response
+          setAttemptedQuiz(data.attempted);
         }
 
-        // Fetch question, remaining time, and answer if the quiz is not attempted
         if (!data.attempted) {
           const questionResponse = await fetch(
             `http://localhost:1234/quiz/${uniqueCode}/question/${questionId}`,
@@ -54,7 +55,6 @@ const Question = () => {
             }
           );
           const questionData = await questionResponse.json();
-          console.log(questionData);
           setQuiz(questionData.quiz);
           setQuestion(questionData.question);
           setQuestionIds(questionData.questionIds);
@@ -95,7 +95,6 @@ const Question = () => {
   }, [uniqueCode, questionId]);
 
   useEffect(() => {
-    // Shuffle options once when the component mounts
     if (question && question.options) {
       const shuffledOptions = shuffleArray(question.options);
       setOptions(shuffledOptions);
@@ -109,8 +108,8 @@ const Question = () => {
         if (prevTime === 0) {
           clearInterval(timerInterval);
           setIsTimeUp(true);
-          setShowPopup(true); // Show popup when time is up
-          saveAnswer(); // Save answer when time is up
+          setShowPopup(true);
+          saveAnswer();
           return 0;
         } else {
           return prevTime - 1;
@@ -121,7 +120,6 @@ const Question = () => {
     return () => clearInterval(timerInterval);
   }, [remainingTime]);
 
-  // Function to handle saving the user's answer
   const saveAnswer = async () => {
     try {
       await fetch(`http://localhost:1234/${uniqueCode}/save-answer`, {
@@ -157,24 +155,19 @@ const Question = () => {
       console.error("Error updating remaining time:", error.message);
     }
 
-    saveAnswer(); // Save answer before navigating to the next question
+    saveAnswer();
 
     const currentIndex = questionIds.indexOf(questionId);
     const nextQuestionId = questionIds[currentIndex + 1];
 
     if (currentIndex === questionIds.length - 1) {
-      // Check if it's the last question
-      console.log(quiz);
-      console.log(quiz.autoAssignMarks);
       if (quiz && quiz.autoAssignMarks) {
-        // Redirect to results page if automaticAssignMarks is true
         window.location.href = `/quiz/${uniqueCode}/result`;
       } else {
-        // Otherwise, end the quiz
         window.location.href = `/quiz/${uniqueCode}/end`;
+        setAttemptedQuiz(true);
       }
     } else {
-      // Navigate to the next question
       const nextQuestionUrl = `/quiz/${uniqueCode}/questions/${nextQuestionId}`;
       window.location.href = nextQuestionUrl;
     }
@@ -217,7 +210,7 @@ const Question = () => {
         console.error("Error updating remaining time:", error.message);
       }
 
-      saveAnswer(); // Save answer before navigating to the previous question
+      saveAnswer();
 
       window.location.href = prevQuestionUrl;
     }
@@ -242,129 +235,215 @@ const Question = () => {
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <Dialog open={showPopup} onClose={() => {}} disableBackdropClick>
-        <DialogTitle>Time's up for this question!</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            You ran out of time for this question.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handlePreviousQuestion} color="primary">
-            Previous Question
-          </Button>
-          <Button onClick={handleNextQuestion} color="primary">
-            Next Question
-          </Button>
-        </DialogActions>
-      </Dialog>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "600px",
+          width: "100%",
+          padding: "20px",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+        }}
+      >
+        <div style={{ position: "relative" }}>
+          <Dialog open={showPopup} onClose={() => {}} disableBackdropClick>
+            <DialogTitle>Time's up for this question!</DialogTitle>
+            <DialogContent>
+              <Typography variant="body1">
+                You ran out of time for this question.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handlePreviousQuestion} color="primary">
+                Previous Question
+              </Button>
+              <Button onClick={handleNextQuestion} color="primary">
+                Next Question
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      {remainingTime !== null && (
-        <div
-          style={{
-            position: "absolute",
-            top: "70%", // Adjust the vertical position
-            right: "5%", // Adjust the horizontal position
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <CircularProgress
-            variant="determinate"
-            value={(remainingTime / 60) * 100}
-            size={100}
-            thickness={2}
-            style={{ color: getProgressColor() }}
-          />
-          <Typography
-            variant="h6"
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            {remainingTime}
-          </Typography>
-        </div>
-      )}
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      {attemptedQuiz ? (
-        <Typography>You have already attempted this quiz.</Typography>
-      ) : loading ? (
-        <Typography>Loading question...</Typography>
-      ) : (
-        <>
-          <Typography variant="h4">{question && question.text}</Typography>
-          {options && options.length > 0 && (
-            <div>
-              {options.map((option, index) => (
-                <div key={index}>
-                  <input
-                    type="radio"
-                    id={`option-${index}`}
-                    name="options"
-                    checked={
-                      originalOptions.indexOf(option) === parseInt(answer)
-                    }
-                    disabled={isTimeUp}
-                    onChange={() => setAnswer(originalOptions.indexOf(option))}
-                  />
-                  <label htmlFor={`option-${index}`}>{option}</label>
-                </div>
-              ))}
+          {remainingTime !== null && (
+            <div
+              style={{
+                position: "absolute",
+                top: "10%",
+                left: "96%",
+                transform: "translate(-100%, -50%)",
+                textAlign: "center",
+              }}
+            >
+              <CircularProgress
+                variant="determinate"
+                value={(100 - (remainingTime / 60) * 100) % 100} // Modify the value calculation
+                size={50}
+                thickness={4}
+                style={{ marginRight: "0px", color: getProgressColor() }}
+              />
+              <Typography
+                variant="h6"
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                {remainingTime}
+              </Typography>
             </div>
           )}
-          {questionIds.indexOf(questionId) === 0 ? (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleNextQuestion}
-            >
-              Next
-            </Button>
+
+          {attemptedQuiz ? (
+            <Typography>You have already attempted this quiz.</Typography>
+          ) : loading ? (
+            <Typography>Loading question...</Typography>
           ) : (
-            <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handlePreviousQuestion}
-              >
-                Previous
-              </Button>
-              {questionIds.indexOf(questionId) === questionIds.length - 1 ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNextQuestion}
-                >
-                  End Quiz
-                </Button>
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ marginBottom: "20px" }}>
+                <Typography variant="h5" style={{ textAlign: "left" }}>
+                  Question {questionIds.indexOf(questionId) + 1}:{" "}
+                  {question && question.text}
+                </Typography>
+              </div>
+              {question.type === "qna" ? ( // Conditionally render text field for qna type
+                <TextField
+                  label="Your Answer"
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                  fullWidth
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  style={{ marginBottom: "20px" }}
+                />
               ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNextQuestion}
-                >
-                  Next
-                </Button>
+                options &&
+                options.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        width: "50%",
+                        marginRight: "10px",
+                      }}
+                    >
+                      {options
+                        .slice(0, options.length / 2)
+                        .map((option, index) => (
+                          <div key={index} style={{ marginBottom: "10px" }}>
+                            <input
+                              type="radio"
+                              id={`option-${index}`}
+                              name="options"
+                              checked={
+                                originalOptions.indexOf(option) ===
+                                parseInt(answer)
+                              }
+                              disabled={isTimeUp}
+                              onChange={() =>
+                                setAnswer(originalOptions.indexOf(option))
+                              }
+                              style={{ marginRight: "10px" }}
+                            />
+                            <label
+                              htmlFor={`option-${index}`}
+                              style={{ fontSize: "16px" }}
+                            >
+                              {option}
+                            </label>
+                          </div>
+                        ))}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        width: "50%",
+                        marginLeft: "10px",
+                      }}
+                    >
+                      {options
+                        .slice(options.length / 2)
+                        .map((option, index) => (
+                          <div key={index} style={{ marginBottom: "10px" }}>
+                            <input
+                              type="radio"
+                              id={`option-${index}`}
+                              name="options"
+                              checked={
+                                originalOptions.indexOf(option) ===
+                                parseInt(answer)
+                              }
+                              disabled={isTimeUp}
+                              onChange={() =>
+                                setAnswer(originalOptions.indexOf(option))
+                              }
+                              style={{ marginRight: "10px" }}
+                            />
+                            <label
+                              htmlFor={`option-${index}`}
+                              style={{ fontSize: "16px" }}
+                            >
+                              {option}
+                            </label>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )
               )}
-            </>
+              <div style={{ textAlign: "center" }}>
+                {questionIds.indexOf(questionId) > 0 && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePreviousQuestion}
+                    style={{ marginRight: "10px" }}
+                  >
+                    Previous
+                  </Button>
+                )}
+                {questionIds.indexOf(questionId) === questionIds.length - 1 ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNextQuestion}
+                  >
+                    End Quiz
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleNextQuestion}
+                  >
+                    Next
+                  </Button>
+                )}
+              </div>
+            </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
 
-// Function to shuffle an array
 const shuffleArray = (array) => {
   const shuffledArray = [...array];
   for (let i = shuffledArray.length - 1; i > 0; i--) {

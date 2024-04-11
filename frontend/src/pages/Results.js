@@ -85,12 +85,6 @@ const AnswersByUniqueCode = () => {
 
   return (
     <Container>
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
       <Typography variant="h3">Answers</Typography>
       <Button
         component={Link}
