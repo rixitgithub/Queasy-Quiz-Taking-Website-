@@ -83,13 +83,11 @@ const quizSchema = new mongoose.Schema({
 
 const answerSchema = new mongoose.Schema({
   questionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Question",
+    type: String,
     required: true,
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    type: String,
     required: true,
   },
   answer: {
@@ -134,6 +132,27 @@ const resultSchema = new mongoose.Schema({
 });
 
 const Result = mongoose.model("Result", resultSchema);
+
+const marksSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Assuming you have a User model
+    required: true,
+  },
+  questionId: {
+    type: String, // Assuming you have a Question model
+    required: true,
+  },
+  marks: {
+    type: Number,
+    required: true,
+  },
+  remarks: {
+    type: String,
+  },
+});
+
+const Marks = mongoose.model("Marks", marksSchema);
 
 // Helper function to generate unique code
 function generateUniqueCode() {
@@ -310,7 +329,9 @@ app.get("/user/quizzes", authenticateJwt, async (req, res) => {
 // Fetch quiz by ID route
 app.get("/quiz/:quizId", authenticateJwt, async (req, res) => {
   try {
+    console.log("no");
     const quizId = req.params.quizId;
+    console.log(quizId);
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
@@ -905,6 +926,176 @@ app.get("/leaderboard/:uniqueCode", authenticateJwt, async (req, res) => {
   } catch (error) {
     console.error("Error fetching leaderboard data:", error.message);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/results", async (req, res) => {
+  try {
+    // Extract data from the request body
+    const { userId, questionId, score, remarks } = req.body;
+
+    // Find a document with the same userId and questionId
+    const existingMarks = await Marks.findOne({ userId, questionId });
+
+    if (existingMarks) {
+      // If a document exists, update its marks or remarks based on the provided data
+      if (score !== undefined && score !== null) {
+        // If score is provided, update marks
+        existingMarks.marks = score;
+      }
+      if (remarks !== undefined && remarks !== null) {
+        // If remarks is provided, update remarks
+        existingMarks.remarks = remarks;
+      }
+      await existingMarks.save();
+    } else {
+      // If no document exists, create a new one
+      const newMarks = new Marks({
+        userId,
+        questionId,
+        score,
+        remarks,
+      });
+      await newMarks.save();
+    }
+
+    // Send a success response
+    res
+      .status(200)
+      .json({ message: "Score and remarks updated successfully." });
+  } catch (error) {
+    console.error("Error updating score and remarks:", error.message);
+    // Send an error response
+    res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+app.get("/marks/:userId/:questionId", async (req, res) => {
+  try {
+    const { userId, questionId } = req.params;
+    // Find the marks and remarks for the given userId and questionId
+    console.log(userId, questionId);
+    const marks = await Marks.findOne({ userId, questionId }, "marks remarks");
+
+    if (!marks) {
+      return res.status(404).json({
+        message: "Marks and remarks not found for this user and question.",
+      });
+    }
+
+    // Return the marks and remarks
+    res.status(200).json({ marks });
+    console.log("final", { marks });
+  } catch (error) {
+    console.error("Error fetching marks and remarks:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/quiz/:uniqueCode/answers", async (req, res) => {
+  try {
+    const uniqueCode = req.params.uniqueCode;
+    // Assuming you have a field in the Answer model to store the quizId
+    const answers = await Answer.find({ uniqueCode });
+    res.json({ answers });
+  } catch (error) {
+    console.error("Error fetching answers for the quiz:", error);
+    res.status(500).json({ error: "Failed to fetch answers for the quiz" });
+  }
+});
+
+// Route to assign marks to an answer
+app.post("/results", async (req, res) => {
+  try {
+    const { answerId, marks } = req.body;
+    // Assuming answerId is the ID of the answer document in the database
+    const result = new Result({ answerId, marks });
+    await result.save();
+    res.status(201).json({ message: "Marks assigned successfully" });
+  } catch (error) {
+    console.error("Error assigning marks:", error);
+    res.status(500).json({ error: "Failed to assign marks" });
+  }
+});
+
+app.get("/quiz/:uniqueCode/user/:userId/", async (req, res) => {
+  try {
+    const { uniqueCode, userId } = req.params;
+
+    // Find answers for the given unique code and user ID
+    const answers = await Answer.find({ uniqueCode, userId });
+
+    if (!answers || answers.length === 0) {
+      return res.status(404).json({ error: "User data not found" });
+    }
+
+    // Extract questionIds from answers
+    const questionIds = answers.map((answer) => answer.questionId);
+
+    // Send the questionIds to the frontend
+    res.json({ questionIds });
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/saveMarks", async (req, res) => {
+  try {
+    const { userId, marks } = req.body;
+    console.log("userId", userId);
+    console.log("marks", marks);
+    // Iterate through each question ID and sav e marks for each
+    for (const questionId in marks) {
+      // Create a new Marks document
+      const marksEntry = new Marks({
+        userId: userId,
+        questionId: questionId,
+        marks: marks[questionId], // Get marks for the specific questionId
+      });
+
+      // Save the marks entry
+      await marksEntry.save();
+    }
+
+    // Send a success response
+    res.status(200).json({ message: "Marks saved successfully" });
+  } catch (error) {
+    // Send an error response if there's any issue
+    console.error("Error saving marks:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/quiz/title/:uniqueCode", async (req, res) => {
+  try {
+    const uniqueCode = req.params.uniqueCode;
+    // Fetch quiz by unique code
+    console.log("bahahahaha");
+    const quiz = await Quiz.findOne({ uniqueCode });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+    res.json({ title: quiz.title });
+  } catch (error) {
+    console.error("Error fetching quiz title:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/user/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    // Fetch user by userId
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    // Send fname, lname, and email to the frontend
+    res.json({ fname: user.fname, lname: user.lname, email: user.email });
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

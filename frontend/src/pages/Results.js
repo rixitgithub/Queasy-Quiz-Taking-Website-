@@ -1,58 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
 
-const AnswersByUniqueCode = () => {
+const AnswersByQuiz = () => {
   const { uniqueCode } = useParams();
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState([]);
+  const [marksAssigned, setMarksAssigned] = useState(false);
+  const [currentUserIndex, setCurrentUserIndex] = useState(0); // Keep track of current user index
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:1234/answers/${uniqueCode}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `http://localhost:1234/quiz/${uniqueCode}/answers`
         );
         const data = await response.json();
-        console.log(data);
-        // Fetch question details for each answer
-        const answersWithQuestions = await Promise.all(
-          data.answers.map(async (answer) => {
-            const questionResponse = await fetch(
-              `http://localhost:1234/questions/${answer.questionId}`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            const questionData = await questionResponse.json();
-            console.log(questionData);
-            return {
-              ...answer,
-              questionText: questionData.question.text,
-            };
-          })
-        );
-        setAnswers(answersWithQuestions);
+        const uniqueUserIds = [
+          ...new Set(data.answers.map((answer) => answer.userId)),
+        ];
+        setAnswers(uniqueUserIds);
+        console.log(uniqueUserIds);
+        console.log(uniqueUserIds[0]);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching answers:", error.message);
+        console.error("Error fetching answers for the quiz:", error);
         setLoading(false);
       }
     };
@@ -60,77 +32,73 @@ const AnswersByUniqueCode = () => {
     fetchAnswers();
   }, [uniqueCode]);
 
-  // Function to group answers by user ID
-  const groupAnswersByUserId = () => {
-    const groupedAnswers = {};
-
-    // Check if answers is defined and not empty before iterating
-    if (answers && answers.length > 0) {
-      answers.forEach((answer) => {
-        if (!groupedAnswers[answer.userId._id]) {
-          // Use userId._id as the key
-          groupedAnswers[answer.userId._id] = {
-            username: `${answer.userId.fname} ${answer.userId.lname}`, // Combine first name and last name to form the username
-            answers: [],
-          };
-        }
-        groupedAnswers[answer.userId._id].answers.push(answer);
+  const assignMarks = async (answerId, marks) => {
+    try {
+      const response = await fetch("http://localhost:1234/results", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ answerId, marks }),
       });
+      if (response.ok) {
+        console.log("Marks assigned successfully");
+        setMarksAssigned(true);
+      } else {
+        console.error("Failed to assign marks");
+      }
+    } catch (error) {
+      console.error("Error assigning marks:", error);
     }
-
-    return groupedAnswers;
   };
 
-  const groupedAnswers = groupAnswersByUserId();
+  const goToUserPage = (userId) => {
+    // Navigate to the user's page using window location
+    navigate(`/quiz/${uniqueCode}/user/${answers[0]}`);
+  };
+
+  // Handle Enter key press event
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      // Navigate to the next user's page
+      if (currentUserIndex < answers.length - 1) {
+        const nextUserId = answers[currentUserIndex + 1];
+        goToUserPage(nextUserId);
+      }
+    }
+  };
 
   return (
-    <Container>
-      <Typography variant="h3">Answers</Typography>
-      <Button
-        component={Link}
-        to={`/leaderboard/${uniqueCode}`}
-        variant="contained"
-        color="primary"
-        style={{ marginBottom: "20px" }}
-      >
-        Leaderboard
-      </Button>
+    <div>
+      <h1>Answers by Quiz</h1>
       {loading ? (
-        <Typography>Loading...</Typography>
+        <p>Loading...</p>
       ) : (
-        <>
-          {Object.keys(groupedAnswers).map((userId) => (
-            <Box key={userId} sx={{ mt: 4 }}>
-              <Typography variant="h5">
-                Answers of :{groupedAnswers[userId].username}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                  marginTop: 2,
-                }}
-              >
-                {groupedAnswers[userId].answers.map((answer, index) => (
-                  <Card key={index} sx={{ width: 300, m: 2 }}>
-                    <CardContent>
-                      <Typography variant="subtitle1">
-                        Question: {answer.questionText}
-                      </Typography>
-                      <Typography variant="body1">
-                        Answer: {answer.answer}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            </Box>
-          ))}
-        </>
+        <div>
+          <ul>
+            <li key={answers[currentUserIndex]}>
+              <p>User ID: {answers[currentUserIndex]}</p>
+              {!marksAssigned && (
+                <button
+                  onClick={() => assignMarks(answers[currentUserIndex], 10)}
+                >
+                  Assign Marks
+                </button>
+              )}
+            </li>
+          </ul>
+          {/* Conditionally render a button to go to the first user's page */}
+          {currentUserIndex === 0 && (
+            <button onClick={() => goToUserPage(answers[0])}>
+              Go to First User
+            </button>
+          )}
+        </div>
       )}
-    </Container>
+      {/* Listen for Enter key press event */}
+      <div tabIndex={0} onKeyPress={handleKeyPress}></div>
+    </div>
   );
 };
 
-export default AnswersByUniqueCode;
+export default AnswersByQuiz;

@@ -16,6 +16,7 @@ import Results from "./pages/Results";
 import UserResult from "./pages/UserResult";
 import PageNotFound from "./pages/PageNotFound";
 import Leaderboard from "./pages/Leaderboard";
+import UserCheckResult from "./pages/UserCheckResult";
 
 function App() {
   return (
@@ -39,6 +40,11 @@ function App() {
           <Route path="/results/:uniqueCode" element={<Results />} />
           <Route path="/leaderboard/:uniqueCode" element={<Leaderboard />} />
           <Route path="/quiz/:uniqueCode/result" element={<UserResult />} />
+          <Route
+            path="/quiz/:uniqueCode/user/:userId"
+            element={<UserCheckResult />}
+          />
+
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
