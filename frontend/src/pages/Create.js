@@ -40,6 +40,8 @@ const CreateQuiz = () => {
   const [assignMarks, setAssignMarks] = useState(false); // Option to assign marks
   const [passingMarks, setPassingMarks] = useState(); // Passing marks
   const [questionMarks, setQuestionMarks] = useState(1); // Marks for each question
+  const [assignEqualMarks, setAssignEqualMarks] = useState(false);
+
   const navigate = useNavigate();
 
   const [mode, setMode] = React.useState("light");
@@ -324,6 +326,16 @@ const CreateQuiz = () => {
                   variant="outlined"
                   sx={{ mb: 2 }}
                 />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={assignEqualMarks}
+                      onChange={(e) => setAssignEqualMarks(e.target.checked)}
+                    />
+                  }
+                  label="Assign Equal Marks to All Questions"
+                />
+
                 <Button
                   variant="contained"
                   onClick={addQuestion}

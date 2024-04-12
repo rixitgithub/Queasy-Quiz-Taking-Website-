@@ -28,6 +28,7 @@ const UserCheckResult = () => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [marks, setMarks] = useState({}); // Store marks as an object with questionId as keys
+  const [comments, setComments] = useState({}); // Store comments for each question
   const [isSaving, setIsSaving] = useState(false); // State to track saving status
   const [isSaved, setIsSaved] = useState(false); // State to track saved status
   const [isChanged, setIsChanged] = useState({}); // State to track if marks are changed
@@ -43,6 +44,7 @@ const UserCheckResult = () => {
     lname: "",
     email: "",
   });
+  const [isSavedText, setIsSavedText] = useState(false); // State to track if "Saved" text should be displayed on the button
 
   const toggleColorMode = () => {
     setMode((prev) => (prev === "dark" ? "light" : "dark"));
@@ -183,14 +185,16 @@ const UserCheckResult = () => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === "Enter") {
+      if (event.key === "ArrowRight") {
         setCurrentUserIndex((prevIndex) => {
           const nextIndex = prevIndex + 1;
           if (nextIndex < userIds.length) {
+            setMarks({});
+            setComments({}); // Reset comments when navigating to next user
             navigate(`/quiz/${uniqueCode}/user/${userIds[nextIndex]}`);
             return nextIndex;
           } else {
-            navigate("/analysis");
+            navigate(`/quiz/:${uniqueCode}/analysis`);
             return prevIndex; // No change in index if navigating to analysis
           }
         });
@@ -215,7 +219,7 @@ const UserCheckResult = () => {
     };
   }, [userIds]);
 
-  // Function to send marks and questionId to the backend
+  // Function to send marks and comments to the backend
   const sendMarks = async () => {
     try {
       setIsSaving(true); // Set saving status to true while sending data
@@ -224,9 +228,11 @@ const UserCheckResult = () => {
       const dataToSend = {
         userId: userId,
         marks: marks,
+        comments: comments, // Include comments in the data
+        uniqueCode: uniqueCode,
       };
 
-      // Make a POST request to send marks and questionId to the backend
+      // Make a POST request to send marks and comments to the backend
       const response = await fetch("http://localhost:1234/saveMarks", {
         method: "POST",
         headers: {
@@ -239,6 +245,13 @@ const UserCheckResult = () => {
       const responseData = await response.json();
       setIsSaving(false); // Set saving status to false after data is sent
       setIsSaved(true); // Set saved status to true after data is successfully saved
+      setIsSavedText(true); // Set isSavedText to true after data is successfully saved
+
+      // Reset isSavedText after a delay (e.g., 5 seconds)
+      setTimeout(() => {
+        setIsSavedText(false);
+      }, 5000);
+
       setIsChanged({}); // Reset changed status after data is saved
     } catch (error) {
       console.error("Error sending marks to the backend:", error);
@@ -246,12 +259,29 @@ const UserCheckResult = () => {
     }
   };
 
-  useEffect(() => {
-    // Automatically save marks to the database when there is a change in the marks state
-    if (Object.keys(marks).length > 0) {
-      sendMarks();
+  // Function to handle manual sending of marks and comments to the backend
+  const handleSendMarks = () => {
+    // Check if marks or comments have changed
+    const marksChanged = Object.keys(marks).some(
+      (questionId) => marks[questionId] !== "" && isChanged[questionId]
+    );
+    const commentsChanged = Object.keys(comments).some(
+      (questionId) => comments[questionId] !== ""
+    );
+
+    // If marks or comments have changed, or if it's not saved yet, send marks and comments
+    if (marksChanged || commentsChanged || !isSaved) {
+      sendMarks(); // Call sendMarks function to send marks and comments to the backend
     }
-  }, [marks]);
+  };
+
+  // Function to handle changes in text fields
+  const handleTextFieldChange = () => {
+    // If text field is changed after saving, reset isSavedText
+    if (isSavedText) {
+      setIsSavedText(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
@@ -309,7 +339,7 @@ const UserCheckResult = () => {
                         {userInfo.fname} {userInfo.lname}
                       </Typography>
                       <Typography variant="body1" sx={{ fontSize: "small" }}>
-                        Email: {userInfo.email}
+                        {userInfo.email}
                       </Typography>
                       <Divider sx={{ my: 2 }} />
                       {currentUserAnswers.map((answer, index) => (
@@ -328,6 +358,23 @@ const UserCheckResult = () => {
                               <Typography variant="body1">
                                 Answer: {answer.answer}
                               </Typography>
+                              <TextField
+                                id={`comments-${index}`}
+                                label="Tutor Comments"
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={3}
+                                margin="normal"
+                                value={comments[answer.questionId] || ""}
+                                onChange={(e) => {
+                                  handleTextFieldChange(); // Call handleTextFieldChange when text field is changed
+                                  const newComments = { ...comments };
+                                  newComments[answer.questionId] =
+                                    e.target.value;
+                                  setComments(newComments);
+                                }}
+                              />
                             </CardContent>
                           </Card>
                           <Box
@@ -344,7 +391,7 @@ const UserCheckResult = () => {
                               type="number"
                               placeholder="Marks"
                               style={{
-                                width: "40px",
+                                width: "70px",
                                 marginRight: "0.5rem",
                                 padding: "0.5rem", // Add padding
                                 border: "1px solid #ccc", // Add border
@@ -352,6 +399,7 @@ const UserCheckResult = () => {
                               }}
                               value={marks[answer.questionId] || ""}
                               onChange={(e) => {
+                                // Handle input change
                                 const newMarks = { ...marks };
                                 newMarks[answer.questionId] = e.target.value;
                                 setMarks(newMarks);
@@ -362,6 +410,7 @@ const UserCheckResult = () => {
                                 }));
                               }}
                             />
+
                             <Typography
                               variant="body1"
                               style={{ width: "3rem" }}
@@ -401,6 +450,46 @@ const UserCheckResult = () => {
             </Box>
           </Container>
         </Container>
+      </Box>
+
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: "2rem",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
+        {isSavedText ? ( // Display "Saved" text on the button if isSavedText is true
+          <button
+            variant="body1"
+            sx={{ color: "#4caf50" }}
+            style={{
+              padding: "0.5rem 1rem", // Add padding
+              backgroundColor: "#1976d2", // Set background color
+              color: "#fff", // Set text color
+              border: "none", // Remove border
+              borderRadius: "4px", // Add border radius
+              cursor: "pointer", // Add cursor pointer
+            }}
+          >
+            Saved
+          </button>
+        ) : (
+          <button
+            onClick={handleSendMarks}
+            style={{
+              padding: "0.5rem 1rem", // Add padding
+              backgroundColor: "#1976d2", // Set background color
+              color: "#fff", // Set text color
+              border: "none", // Remove border
+              borderRadius: "4px", // Add border radius
+              cursor: "pointer", // Add cursor pointer
+            }}
+          >
+            Save Marks
+          </button>
+        )}
       </Box>
     </ThemeProvider>
   );

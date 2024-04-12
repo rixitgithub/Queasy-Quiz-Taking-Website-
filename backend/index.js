@@ -151,8 +151,31 @@ const marksSchema = new mongoose.Schema({
     type: String,
   },
 });
+const markstrialSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Assuming you have a User model
+    required: true,
+  },
+  uniqueCode: {
+    type: String,
+    required: true,
+  },
+  questionId: {
+    type: String, // Assuming you have a Question model
+    required: true,
+  },
+  marks: {
+    type: Number,
+    required: true,
+  },
+  comments: {
+    type: String,
+  },
+});
 
 const Marks = mongoose.model("Marks", marksSchema);
+const MarksTrial = mongoose.model("MarksTrial", markstrialSchema);
 
 // Helper function to generate unique code
 function generateUniqueCode() {
@@ -1042,27 +1065,42 @@ app.get("/quiz/:uniqueCode/user/:userId/", async (req, res) => {
 
 app.post("/saveMarks", async (req, res) => {
   try {
-    const { userId, marks } = req.body;
-    console.log("userId", userId);
-    console.log("marks", marks);
-    // Iterate through each question ID and sav e marks for each
+    const { userId, marks, uniqueCode, comments } = req.body;
+
+    // Check if marks entries already exist for the combination of userId and uniqueCode
+    const existingMarks = await MarksTrial.find({
+      userId: userId,
+      uniqueCode: uniqueCode,
+    });
+
+    // If existing marks entries are found, delete them
+    if (existingMarks.length > 0) {
+      await MarksTrial.deleteMany({
+        userId: userId,
+        uniqueCode: uniqueCode,
+      });
+    }
+
+    // Create new marks and comments entries for each questionId
     for (const questionId in marks) {
       // Create a new Marks document
-      const marksEntry = new Marks({
+      const marksEntry = new MarksTrial({
         userId: userId,
         questionId: questionId,
         marks: marks[questionId], // Get marks for the specific questionId
+        comments: comments[questionId], // Get comments for the specific questionId
+        uniqueCode: uniqueCode, // Include uniqueCode in the new marks entry
       });
-
+      console.log(marksEntry);
       // Save the marks entry
       await marksEntry.save();
     }
 
     // Send a success response
-    res.status(200).json({ message: "Marks saved successfully" });
+    res.status(200).json({ message: "Marks and comments saved successfully" });
   } catch (error) {
     // Send an error response if there's any issue
-    console.error("Error saving marks:", error);
+    console.error("Error saving marks and comments:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
