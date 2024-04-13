@@ -17,7 +17,7 @@ const QuizAnalysis = () => {
   const [chartData, setChartData] = useState({
     options: {
       chart: {
-        id: "basic-bar",
+        id: "total-marks-chart",
       },
       xaxis: {
         categories: [],
@@ -71,6 +71,33 @@ const QuizAnalysis = () => {
       },
     ],
   });
+  const [timeSpentChartData, setTimeSpentChartData] = useState({
+    options: {
+      chart: {
+        id: "time-spent-chart",
+        type: "area",
+      },
+      xaxis: {
+        categories: [],
+        labels: {
+          formatter: function (val) {
+            return val.toString();
+          },
+        },
+      },
+      yaxis: {
+        title: {
+          text: "Time Spent",
+        },
+      },
+    },
+    series: [
+      {
+        name: "Average Time Spent",
+        data: [],
+      },
+    ],
+  });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [quizTitle, setQuizTitle] = useState("");
@@ -78,18 +105,15 @@ const QuizAnalysis = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
+        const marksResponse = await fetch(
           `http://localhost:1234/marks/${uniqueCode}`
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-        const marksData = await response.json();
-        if (marksData.length === 0) {
-          console.error("No marks data found");
-          return;
+        const marksData = await marksResponse.json();
+        if (!marksResponse.ok || marksData.length === 0) {
+          throw new Error("Failed to fetch marks data");
         }
 
+        // Total Marks Chart Data
         const totalMarksMap = new Map();
         marksData.forEach((mark) => {
           const userId = mark.username;
@@ -98,10 +122,8 @@ const QuizAnalysis = () => {
           }
           totalMarksMap.set(userId, totalMarksMap.get(userId) + mark.marks);
         });
-
         const usernames = Array.from(totalMarksMap.keys());
         const totalMarks = Array.from(totalMarksMap.values());
-
         setChartData((prevChartData) => ({
           ...prevChartData,
           options: {
@@ -111,13 +133,10 @@ const QuizAnalysis = () => {
               categories: usernames,
             },
           },
-          series: [
-            {
-              data: totalMarks,
-            },
-          ],
+          series: [{ data: totalMarks }],
         }));
 
+        // Average Score Chart Data
         const questionIds = Array.from(
           new Set(marksData.map((mark) => mark.questionId))
         );
@@ -133,14 +152,12 @@ const QuizAnalysis = () => {
           const averageScore = totalMarksForQuestion / marksForQuestion.length;
           averageScores.push(averageScore);
         });
-
         setAverageScoreChartData((prevChartData) => ({
           ...prevChartData,
           options: {
             ...prevChartData.options,
             xaxis: {
               categories: questionIds.map((questionId) => {
-                // Map question ID to question text
                 const correspondingMark = marksData.find(
                   (mark) => mark.questionId === questionId
                 );
@@ -148,11 +165,32 @@ const QuizAnalysis = () => {
               }),
             },
           },
-          series: [
-            {
-              data: averageScores,
+          series: [{ data: averageScores }],
+        }));
+
+        // Time Spent Chart Data
+        const uniqueQuestions = Array.from(
+          new Set(marksData.map((mark) => mark.questionText))
+        );
+        const averageTimeSpent = uniqueQuestions.map((question) => {
+          const timeSpentForQuestion = marksData
+            .filter((mark) => mark.questionText === question)
+            .map((mark) => mark.timespent);
+          const totalSpent = timeSpentForQuestion.reduce(
+            (acc, curr) => acc + curr,
+            0
+          );
+          return totalSpent / timeSpentForQuestion.length;
+        });
+        setTimeSpentChartData((prevChartData) => ({
+          ...prevChartData,
+          options: {
+            ...prevChartData.options,
+            xaxis: {
+              categories: uniqueQuestions,
             },
-          ],
+          },
+          series: [{ data: averageTimeSpent }],
         }));
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -160,7 +198,7 @@ const QuizAnalysis = () => {
     };
 
     fetchData();
-  }, []);
+  }, [uniqueCode]);
 
   useEffect(() => {
     const fetchQuizTitle = async () => {
@@ -179,7 +217,7 @@ const QuizAnalysis = () => {
     };
 
     fetchQuizTitle();
-  }, []);
+  }, [uniqueCode]);
 
   const toggleColorMode = () => {
     setMode((prev) => (prev === "dark" ? "light" : "dark"));
@@ -234,7 +272,6 @@ const QuizAnalysis = () => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-
             textAlign: "center",
             pt: { xs: 5, sm: 12 },
             pb: { xs: 8, sm: 12 },
@@ -263,6 +300,7 @@ const QuizAnalysis = () => {
               margin: "auto",
             }}
           >
+            {/* Total Marks Chart */}
             <Chart
               options={filteredChartData.options}
               series={filteredChartData.series}
@@ -279,6 +317,7 @@ const QuizAnalysis = () => {
               marginTop: { xs: 20, sm: 20 },
             }}
           >
+            {/* Average Score Chart */}
             <Box
               sx={{
                 width: "50%",
@@ -299,7 +338,7 @@ const QuizAnalysis = () => {
                   color: mode === "light" ? "#000000" : "#FFFFFF",
                 }}
               >
-                Average Score Chart 1
+                Average Score Obtained / Question
               </Typography>
               <Chart
                 options={averageScoreChartData.options}
@@ -309,6 +348,7 @@ const QuizAnalysis = () => {
               />
             </Box>
 
+            {/* Time Spent Chart */}
             <Box
               sx={{
                 width: "50%",
@@ -329,11 +369,11 @@ const QuizAnalysis = () => {
                   color: mode === "light" ? "#000000" : "#FFFFFF",
                 }}
               >
-                Average Score Chart 2
+                Average Time Spent / Question
               </Typography>
               <Chart
-                options={averageScoreChartData.options}
-                series={averageScoreChartData.series}
+                options={timeSpentChartData.options}
+                series={timeSpentChartData.series}
                 type="area"
                 width="100%"
               />
