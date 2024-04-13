@@ -8,6 +8,8 @@ import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Container from "@mui/material/Container";
 
+import { alpha } from "@mui/material";
+
 const QuizAnalysis = () => {
   const { uniqueCode } = useParams();
   const [mode, setMode] = useState("light");
@@ -155,6 +157,63 @@ const QuizAnalysis = () => {
       },
     ],
   });
+  const [marksDistribution, setMarksDistribution] = useState({
+    options: {
+      chart: {
+        id: "marks-distribution-chart",
+        type: "donut",
+      },
+      labels: [
+        "100%",
+        "90-100%",
+        "80-90%",
+        "70-80%",
+        "60-70%",
+        "50-60%",
+        "40-50%",
+        "33-40%",
+        "<33%",
+      ],
+      colors: [
+        "#7cb5ec",
+        "#90ed7d",
+        "#f7a35c",
+        "#8085e9",
+        "#f15c80",
+        "#e4d354",
+        "#2b908f",
+        "#f45b5b",
+        "#91e8e1",
+      ], // Soft and harmonious colors // Add your desired colors here
+    },
+    series: [],
+  });
+
+  useEffect(() => {
+    const fetchMarksAnalysisData = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}/marks-analysis`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch marks analysis data");
+        }
+        const data = await response.json();
+        console.log("marks analysis", data);
+
+        // Map marks analysis data to marksDistribution state
+        const seriesData = Object.values(data.marksAnalysis);
+        setMarksDistribution((prev) => ({
+          ...prev,
+          series: seriesData,
+        }));
+      } catch (error) {
+        console.error("Error fetching marks analysis data:", error);
+      }
+    };
+
+    fetchMarksAnalysisData();
+  }, [uniqueCode]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -399,162 +458,245 @@ const QuizAnalysis = () => {
 
   return (
     <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
-      <CssBaseline />
-      <AppAppBar toggleColorMode={toggleColorMode} />
-      <Box sx={{ flexGrow: 1 }}>
-        <Container
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            pt: { xs: 5, sm: 12 },
-            pb: { xs: 8, sm: 12 },
-          }}
-          style={{ width: "110%" }}
-        >
-          <Typography variant="h4" sx={{ mb: 2 }}>
-            MARKS ANALYSIS - {quizTitle}
-          </Typography>
-          <TextField
-            label="Enter Username"
-            variant="outlined"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            sx={{ mb: 0, width: "50%" }}
-          />
-          {filteredUsernames.length === 0 && (
-            <Typography variant="subtitle1">No user found</Typography>
-          )}
-          <Box
-            id="image"
-            sx={{
-              mt: { xs: 4, sm: 1 },
-              alignSelf: "center",
-              width: "80%",
-              margin: "auto",
-            }}
-          >
-            {/* Total Marks Chart */}
-            <Chart
-              options={filteredChartData.options}
-              series={filteredChartData.series}
-              type="bar"
-              width="100%"
-            />
-          </Box>
-
-          <Box
+      <Box
+        id="hero"
+        sx={(theme) => ({
+          width: "100%",
+          backgroundImage:
+            theme.palette.mode === "light"
+              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+          backgroundSize: "100% 20%",
+          backgroundRepeat: "no-repeat",
+        })}
+      >
+        <CssBaseline />
+        <AppAppBar toggleColorMode={toggleColorMode} />
+        <Box sx={{ flexGrow: 1 }}>
+          <Container
             sx={{
               display: "flex",
-              justifyContent: "center",
-              width: "95%",
-              marginTop: { xs: 20, sm: 20 },
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              pt: { xs: 5, sm: 12 },
+              pb: { xs: 8, sm: 12 },
             }}
+            style={{ width: "110%" }}
           >
-            {/* Average Score Chart */}
+            <Typography variant="h4" sx={{ mb: 2 }}>
+              MARKS ANALYSIS - {quizTitle}
+            </Typography>
+            <TextField
+              label="Enter Username"
+              variant="outlined"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              sx={{ mb: 0, width: "50%" }}
+            />
+            {filteredUsernames.length === 0 && (
+              <Typography variant="subtitle1">No user found</Typography>
+            )}
             <Box
+              id="image"
               sx={{
-                width: "50%",
-                marginRight: "10px",
-                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                borderRadius: "8px",
-                boxShadow: showCustomTheme
-                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                padding: "20px",
+                mt: { xs: 4, sm: 1 },
+                alignSelf: "center",
+                width: "80%",
+                margin: "auto",
               }}
             >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: "bold",
-                  marginBottom: "10px",
-                  color: mode === "light" ? "#000000" : "#FFFFFF",
-                }}
-              >
-                Average Score Obtained / Question
-              </Typography>
+              {/* Total Marks Chart */}
               <Chart
-                options={averageScoreChartData.options}
-                series={averageScoreChartData.series}
+                options={filteredChartData.options}
+                series={filteredChartData.series}
                 type="bar"
                 width="100%"
               />
             </Box>
 
-            {/* Time Spent Chart */}
             <Box
               sx={{
-                width: "50%",
-                marginLeft: "10px",
-                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                borderRadius: "8px",
-                boxShadow: showCustomTheme
-                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                padding: "20px",
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
               }}
             >
-              <Typography
-                variant="h5"
+              {/* Average Score Chart */}
+              <Box
                 sx={{
-                  fontWeight: "bold",
-                  marginBottom: "10px",
-                  color: mode === "light" ? "#000000" : "#FFFFFF",
+                  width: "50%",
+                  marginRight: "10px",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
                 }}
               >
-                Average Time Spent / Question
-              </Typography>
-              <Chart
-                options={timeSpentChartData.options}
-                series={timeSpentChartData.series}
-                type="area"
-                width="100%"
-              />
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              width: "95%",
-              marginTop: { xs: 20, sm: 20 },
-            }}
-          >
-            {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  Average Score Obtained / Question
+                </Typography>
+                <Chart
+                  options={averageScoreChartData.options}
+                  series={averageScoreChartData.series}
+                  type="bar"
+                  width="100%"
+                />
+              </Box>
 
-            <Box
-              sx={{
-                width: "80%",
-                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                borderRadius: "8px",
-                boxShadow: showCustomTheme
-                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                padding: "20px",
-              }}
-            >
-              <Typography
-                variant="h5"
+              {/* Time Spent Chart */}
+              <Box
                 sx={{
-                  fontWeight: "bold",
-                  marginBottom: "10px",
-                  color: mode === "light" ? "#000000" : "#FFFFFF",
+                  width: "50%",
+                  marginLeft: "10px",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
                 }}
               >
-                Marks Analysis per Question
-              </Typography>
-              {/* Additional Chart */}
-              <Chart
-                options={additionalChartData.options}
-                series={additionalChartData.series}
-                type="line"
-                width="100%"
-              />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  Average Time Spent / Question
+                </Typography>
+                <Chart
+                  options={timeSpentChartData.options}
+                  series={timeSpentChartData.series}
+                  type="area"
+                  width="100%"
+                />
+              </Box>
             </Box>
-          </Box>
-        </Container>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
+              }}
+            >
+              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+
+              <Box
+                sx={{
+                  width: "80%",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  Marks Analysis per Question
+                </Typography>
+                {/* Additional Chart */}
+                <Chart
+                  options={additionalChartData.options}
+                  series={additionalChartData.series}
+                  type="line"
+                  width="100%"
+                />
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
+              }}
+            >
+              {/* Average Score Chart */}
+              <Box
+                sx={{
+                  width: "50%",
+                  marginRight: "10px",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  Marks Distribution
+                </Typography>
+                <Chart
+                  options={marksDistribution.options}
+                  series={marksDistribution.series}
+                  type="donut"
+                  width="100%"
+                />
+              </Box>
+
+              {/* Time Spent Chart */}
+              <Box
+                sx={{
+                  width: "50%",
+                  marginLeft: "10px",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                  }}
+                >
+                  Average Time Spent / Question
+                </Typography>
+                <Chart
+                  options={timeSpentChartData.options}
+                  series={timeSpentChartData.series}
+                  type="area"
+                  width="100%"
+                />
+              </Box>
+            </Box>
+          </Container>
+        </Box>
       </Box>
     </ThemeProvider>
   );

@@ -1265,7 +1265,6 @@ app.get("/marks/:uniqueCode", async (req, res) => {
         averageMarks,
       });
     }
-    console.log({ marksWithUsernamesAndQuestions });
     // If marks are found, return them with usernames, question text, and additional statistics
     res.status(200).json(marksWithUsernamesAndQuestions);
   } catch (error) {
@@ -1283,6 +1282,86 @@ function calculateMedian(arr) {
     ? (sortedArr[mid - 1] + sortedArr[mid]) / 2
     : sortedArr[mid];
 }
+
+// Route to calculate marks obtained by each user for a specific quiz
+app.get("/quiz/:uniqueCode/marks-analysis", async (req, res) => {
+  const uniqueCode = req.params.uniqueCode;
+
+  try {
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Calculate the total marks by summing the marks of all questions
+    let totalMarks = 0;
+    quiz.questions.forEach((question) => {
+      totalMarks += question.marks;
+    });
+
+    // Find all marks entries for the given quiz uniqueCode
+    const marksEntries = await MarksTrial.find({ uniqueCode });
+
+    if (!marksEntries || marksEntries.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No marks entries found for this quiz" });
+    }
+
+    // Calculate marks obtained by each user
+    const marksByUser = {};
+    marksEntries.forEach((entry) => {
+      if (!marksByUser[entry.userId]) {
+        marksByUser[entry.userId] = 0;
+      }
+      marksByUser[entry.userId] += entry.marks;
+    });
+
+    // Calculate the number of students in each marks range
+    const marksAnalysis = {
+      "100%": 0,
+      "90-100%": 0,
+      "80-90%": 0,
+      "70-80%": 0,
+      "60-70%": 0,
+      "50-60%": 0,
+      "40-50%": 0,
+      "33-40%": 0,
+      "<33%": 0,
+    };
+
+    Object.values(marksByUser).forEach((marks) => {
+      const percentage = (marks / totalMarks) * 100;
+
+      if (percentage === 100) {
+        marksAnalysis["100%"]++;
+      } else if (percentage >= 90) {
+        marksAnalysis["90-100%"]++;
+      } else if (percentage >= 80) {
+        marksAnalysis["80-90%"]++;
+      } else if (percentage >= 70) {
+        marksAnalysis["70-80%"]++;
+      } else if (percentage >= 60) {
+        marksAnalysis["60-70%"]++;
+      } else if (percentage >= 50) {
+        marksAnalysis["50-60%"]++;
+      } else if (percentage >= 40) {
+        marksAnalysis["40-50%"]++;
+      } else if (percentage >= 33) {
+        marksAnalysis["33-40%"]++;
+      } else {
+        marksAnalysis["<33%"]++;
+      }
+    });
+    console.log({ marksAnalysis });
+    // Send marks analysis as a JSON response
+    res.json({ marksAnalysis });
+  } catch (error) {
+    console.error("Error calculating marks analysis:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => {
