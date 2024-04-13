@@ -77,29 +77,6 @@ const Leaderboard = () => {
           </button>
         </div>
       </div>
-      <div className="stats-container">
-        {/* Number of Participants Card */}
-        <div className="card">
-          <h3>Number of Participants</h3>
-          <p>{leaderboardData.length}</p>
-        </div>
-        {/* Median Marks Card */}
-        <div className="card">
-          <h3>Median Marks</h3>
-          <p>{calculateMedian(leaderboardData)}</p>
-        </div>
-        {/* Range Card */}
-        <div className="card">
-          <h3>Range</h3>
-          <p>
-            {leaderboardData.length > 0
-              ? `${leaderboardData[leaderboardData.length - 1].totalMarks} - ${
-                  leaderboardData[0].totalMarks
-                }`
-              : "N/A"}
-          </p>
-        </div>
-      </div>
 
       <div ref={componentRef}>
         {loading ? (
@@ -140,19 +117,6 @@ const Leaderboard = () => {
       </div>
     </div>
   );
-};
-
-const calculateMedian = (data) => {
-  if (data.length === 0) return 0;
-
-  const sortedMarks = data.map((user) => user.totalMarks).sort((a, b) => a - b);
-  const middle = Math.floor(sortedMarks.length / 2);
-
-  if (sortedMarks.length % 2 === 0) {
-    return (sortedMarks[middle - 1] + sortedMarks[middle]) / 2;
-  } else {
-    return sortedMarks[middle];
-  }
 };
 
 export default Leaderboard;

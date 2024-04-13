@@ -3,12 +3,24 @@ import { useParams } from "react-router-dom";
 import Chart from "react-apexcharts";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Box, TextField, Typography, Paper } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Typography,
+  Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Container from "@mui/material/Container";
+import Divider from "@mui/material/Divider";
 
 import { alpha } from "@mui/material";
+import Footer from "../components/Footer";
 
 const QuizAnalysis = () => {
   const { uniqueCode } = useParams();
@@ -188,6 +200,27 @@ const QuizAnalysis = () => {
     },
     series: [],
   });
+
+  const [userData, setUserData] = useState([]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/total-marks/${uniqueCode}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [uniqueCode]);
 
   const [feedbacks, setFeedbacks] = useState([]);
 
@@ -697,7 +730,7 @@ const QuizAnalysis = () => {
                     ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
                     : "0px 2px 4px rgba(255, 255, 255, 0.1)",
                   padding: "20px",
-                  maxHeight: "500px", // Set a maximum height for the container
+                  maxHeight: "450px", // Set a maximum height for the container
                   overflowY: "auto", // Enable vertical scrolling when content exceeds the container height
                 }}
               >
@@ -723,8 +756,83 @@ const QuizAnalysis = () => {
                 ))}
               </Box>
             </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
+              }}
+            >
+              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+
+              <Box
+                sx={{
+                  width: "80%",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
+                }}
+              >
+                <Typography variant="h5" sx={{ mt: 3, mb: 3 }}>
+                  User Scores
+                </Typography>
+                <Paper elevation={3} sx={{ p: 2, borderRadius: "8px" }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Sno.</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Email</TableCell>
+                        {/* Display "Q1", "Q2", "Q3", and so on as column headers */}
+                        {Array.from(
+                          new Set(marksData.map((mark) => mark.questionId))
+                        ).map((questionId, index) => (
+                          <TableCell key={questionId}>{`Q${
+                            index + 1
+                          }`}</TableCell>
+                        ))}
+                        <TableCell>Total Score</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {/* Map over userData to display each user */}
+                      {userData.map((user, index) => (
+                        <TableRow key={user.email}>
+                          <TableCell>{index + 1}</TableCell> {/* Add sno */}
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          {/* Loop over unique question IDs to display marks for each question */}
+                          {Array.from(
+                            new Set(marksData.map((mark) => mark.questionId))
+                          ).map((questionId) => {
+                            const userMark = marksData.find(
+                              (mark) =>
+                                mark.questionId === questionId &&
+                                mark.username === user.username
+                            );
+                            return (
+                              <TableCell key={questionId}>
+                                {userMark ? userMark.marks : "-"}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell>{user.totalMarks}</TableCell>{" "}
+                          {/* Display total score */}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Box>
+            </Box>
           </Container>
         </Box>
+        <Divider />
+        <Footer />
       </Box>
     </ThemeProvider>
   );

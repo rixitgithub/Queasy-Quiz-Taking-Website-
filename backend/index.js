@@ -1409,6 +1409,56 @@ app.get("/quiz/feedback/:uniqueCode", async (req, res) => {
   }
 });
 
+app.get("/total-marks/:uniqueCode", async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+
+    // Find all marks for the given uniqueCode
+    const marks = await MarksTrial.find({ uniqueCode });
+
+    // Create an object to store total marks for each user
+    const totalMarksMap = {};
+
+    // Create an object to store marks of each user for each question
+    const userMarksMap = {};
+
+    // Calculate total marks for each user and marks for each user for each question
+    marks.forEach((mark) => {
+      if (!totalMarksMap[mark.userId]) {
+        totalMarksMap[mark.userId] = 0;
+      }
+      totalMarksMap[mark.userId] += mark.marks;
+
+      if (!userMarksMap[mark.userId]) {
+        userMarksMap[mark.userId] = [];
+      }
+      userMarksMap[mark.userId].push({
+        questionId: mark.questionId,
+        marks: mark.marks,
+      });
+    });
+
+    // Fetch username and email for each user from the User model
+    const users = await User.find(
+      { _id: { $in: Object.keys(totalMarksMap) } },
+      "fname lname email"
+    );
+
+    // Prepare the response data with username, email, total marks, and marks for each question
+    const responseData = users.map((user) => ({
+      username: `${user.fname} ${user.lname}`,
+      email: user.email,
+      totalMarks: totalMarksMap[user._id], // Get total marks from the map
+      marksForEachQuestion: userMarksMap[user._id], // Get marks for each question from the map
+    }));
+    console.log("response", responseData);
+    res.json(responseData);
+  } catch (error) {
+    console.error("Error calculating total marks:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on Port ${PORT}`);
