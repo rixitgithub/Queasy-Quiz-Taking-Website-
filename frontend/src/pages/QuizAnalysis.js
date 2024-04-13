@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import Chart from "react-apexcharts";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { Box, TextField, Typography } from "@mui/material";
+import { Box, TextField, Typography, Paper } from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Container from "@mui/material/Container";
@@ -188,6 +188,28 @@ const QuizAnalysis = () => {
     },
     series: [],
   });
+
+  const [feedbacks, setFeedbacks] = useState([]);
+
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quiz/feedback/${uniqueCode}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch feedbacks");
+        }
+        const data = await response.json();
+        console.log(data);
+        setFeedbacks(data.feedback);
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+      }
+    };
+
+    fetchFeedbacks();
+  }, [uniqueCode]);
 
   useEffect(() => {
     const fetchMarksAnalysisData = async () => {
@@ -675,6 +697,8 @@ const QuizAnalysis = () => {
                     ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
                     : "0px 2px 4px rgba(255, 255, 255, 0.1)",
                   padding: "20px",
+                  maxHeight: "500px", // Set a maximum height for the container
+                  overflowY: "auto", // Enable vertical scrolling when content exceeds the container height
                 }}
               >
                 <Typography
@@ -685,14 +709,18 @@ const QuizAnalysis = () => {
                     color: mode === "light" ? "#000000" : "#FFFFFF",
                   }}
                 >
-                  Average Time Spent / Question
+                  Quiz Feedback
                 </Typography>
-                <Chart
-                  options={timeSpentChartData.options}
-                  series={timeSpentChartData.series}
-                  type="area"
-                  width="100%"
-                />
+                {feedbacks.map((feedback, index) => (
+                  <Paper key={index} elevation={3} sx={{ p: 2, mt: 2 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ color: mode === "light" ? "#000000" : "#FFFFFF" }}
+                    >
+                      {feedback}
+                    </Typography>
+                  </Paper>
+                ))}
               </Box>
             </Box>
           </Container>

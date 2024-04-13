@@ -79,6 +79,7 @@ const quizSchema = new mongoose.Schema({
   },
   autoAssignMarks: { type: Boolean, default: false }, // Automatic assignment of marks
   passingMarks: { type: Number, default: 60 }, // Passing marks for the quiz
+  feedback: [{ type: String }], // Feedback array
 });
 
 const answerSchema = new mongoose.Schema({
@@ -1354,11 +1355,56 @@ app.get("/quiz/:uniqueCode/marks-analysis", async (req, res) => {
         marksAnalysis["<33%"]++;
       }
     });
-    console.log({ marksAnalysis });
     // Send marks analysis as a JSON response
     res.json({ marksAnalysis });
   } catch (error) {
     console.error("Error calculating marks analysis:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/quiz/feedback/:uniqueCode", async (req, res) => {
+  const { uniqueCode } = req.params;
+  const { feedback } = req.body;
+
+  try {
+    // Find the quiz by uniqueCode
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    // Add the feedback to the quiz
+    quiz.feedback.push(feedback);
+
+    // Save the updated quiz
+    await quiz.save();
+
+    res.status(201).json({ message: "Feedback saved successfully" });
+  } catch (error) {
+    console.error("Error saving feedback:", error);
+    res.status(500).json({ error: "Failed to save feedback" });
+  }
+});
+
+app.get("/quiz/feedback/:uniqueCode", async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+
+    // Find the quiz by unique code
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Extract feedbacks from the quiz
+    const { feedback } = quiz;
+    console.log({ feedback });
+    res.json({ feedback });
+  } catch (error) {
+    console.error("Error fetching feedbacks:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
