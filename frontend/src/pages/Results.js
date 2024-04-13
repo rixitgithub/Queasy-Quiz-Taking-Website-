@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const AnswersByQuiz = () => {
   const { uniqueCode } = useParams();
@@ -97,6 +97,7 @@ const AnswersByQuiz = () => {
       )}
       {/* Listen for Enter key press event */}
       <div tabIndex={0} onKeyPress={handleKeyPress}></div>
+      <Link to={`/quiz/${uniqueCode}/analysis`}>analytics</Link>
     </div>
   );
 };

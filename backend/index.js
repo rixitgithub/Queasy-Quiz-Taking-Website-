@@ -162,7 +162,7 @@ const markstrialSchema = new mongoose.Schema({
     required: true,
   },
   questionId: {
-    type: String, // Assuming you have a Question model
+    type: String,
     required: true,
   },
   marks: {
@@ -1114,6 +1114,7 @@ app.get("/quiz/title/:uniqueCode", async (req, res) => {
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
+    console.log(quiz.title);
     res.json({ title: quiz.title });
   } catch (error) {
     console.error("Error fetching quiz title:", error);
@@ -1134,6 +1135,182 @@ app.get("/user/:userId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user details:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Add a new route to fetch data from the markstrial schema
+app.get("/markstrial", authenticateJwt, async (req, res) => {
+  try {
+    // Fetch data from the markstrial collection
+    const marksData = await MarksTrial.find({ userId: req.user._id }).populate(
+      "questionId"
+    );
+    res.json(marksData);
+  } catch (error) {
+    console.error("Error fetching markstrial data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/marks/:uniqueCode", async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+
+    // Fetch marks for the specified uniqueCode
+    const allMarks = await MarksTrial.find({ uniqueCode }).populate({
+      path: "userId",
+      select: "fname lname", // Only fetch 'fname' and 'lname'
+    });
+
+    // If there are no marks found for the uniqueCode
+    if (!allMarks || allMarks.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No marks found for this uniqueCode" });
+    }
+
+    // Array to store marks with usernames and question text
+    const marksWithUsernamesAndQuestions = [];
+
+    // Loop through each mark
+    for (const mark of allMarks) {
+      // Find the quiz associated with the mark
+      const quiz = await Quiz.findOne({ uniqueCode: mark.uniqueCode });
+      if (!quiz) {
+        console.error("Quiz not found for mark:", mark);
+        continue; // Skip this mark if the associated quiz is not found
+      }
+
+      // Find the question corresponding to the question ID
+      const question = quiz.questions.find(
+        (question) => question._id.toString() === mark.questionId
+      );
+      if (!question) {
+        console.error("Question not found for mark:", mark);
+        continue; // Skip this mark if the associated question is not found
+      }
+
+      // Add mark data along with question text to the array
+      marksWithUsernamesAndQuestions.push({
+        username: mark.userId.fname + " " + mark.userId.lname,
+        uniqueCode: mark.uniqueCode,
+        questionId: mark.questionId,
+        questionText: question.text,
+        marks: mark.marks,
+        comments: mark.comments,
+      });
+    }
+    console.log("final", marksWithUsernamesAndQuestions);
+    // If marks are found, return them with usernames and question text
+    res.status(200).json(marksWithUsernamesAndQuestions);
+  } catch (error) {
+    // Handle errors
+    console.error("Error fetching marks:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const calculateAverageTime = async (questionId, uniqueCode) => {
+  try {
+    // Fetch all documents for the specified questionId and uniqueCode
+    const timeRemainingData = await TimeRemaining.find({
+      questionId,
+      uniqueCode,
+    });
+
+    // Calculate total time spent and total number of attempts
+    let totalTimeSpent = 0;
+    const totalAttempts = timeRemainingData.length;
+
+    timeRemainingData.forEach((data) => {
+      totalTimeSpent += data.remainingTime;
+    });
+
+    // Fetch the quiz associated with the uniqueCode to get the total time limit
+    const quiz = await Quiz.findOne({ uniqueCode });
+    if (!quiz) {
+      throw new Error("Quiz not found for uniqueCode:", uniqueCode);
+    }
+    const totalTimeLimit = quiz.questions.find(
+      (q) => q._id.toString() === questionId
+    )?.timeLimit;
+
+    if (!totalTimeLimit) {
+      throw new Error("Time limit not found for questionId:", questionId);
+    }
+
+    // Calculate average time spent
+    const averageTimeSpent =
+      totalAttempts > 0 ? (totalTimeLimit - totalTimeSpent) / totalAttempts : 0;
+
+    return { averageTimeSpent, totalAttempts };
+  } catch (error) {
+    // Handle error
+    console.error("Error calculating average time:", error);
+    throw error;
+  }
+};
+
+app.get("/marks/:uniqueCode", async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+
+    // Fetch marks for the specified uniqueCode
+    const allMarks = await MarksTrial.find({ uniqueCode }).populate({
+      path: "userId",
+      select: "fname lname", // Only fetch 'fname' and 'lname'
+    });
+
+    // If there are no marks found for the uniqueCode
+    if (!allMarks || allMarks.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No marks found for this uniqueCode" });
+    }
+
+    // Array to store marks with usernames, question text, and average time spent
+    const marksWithUsernamesAndQuestions = [];
+
+    // Loop through each mark
+    for (const mark of allMarks) {
+      // Find the quiz associated with the mark
+      const quiz = await Quiz.findOne({ uniqueCode: mark.uniqueCode });
+      if (!quiz) {
+        console.error("Quiz not found for mark:", mark);
+        continue; // Skip this mark if the associated quiz is not found
+      }
+
+      // Find the question corresponding to the question ID
+      const question = quiz.questions.find(
+        (question) => question._id.toString() === mark.questionId
+      );
+      if (!question) {
+        console.error("Question not found for mark:", mark);
+        continue; // Skip this mark if the associated question is not found
+      }
+
+      // Calculate average time spent for the question
+      const { averageTimeSpent } = await calculateAverageTime(mark.questionId);
+
+      // Add mark data along with question text and average time spent to the array
+      marksWithUsernamesAndQuestions.push({
+        username: mark.userId.fname + " " + mark.userId.lname,
+        uniqueCode: mark.uniqueCode,
+        questionId: mark.questionId,
+        questionText: question.text,
+        averageTimeSpent,
+        marks: mark.marks,
+        comments: mark.comments,
+      });
+    }
+
+    // If marks are found, return them with usernames, question text, and average time spent
+    console.log(marksWithUsernamesAndQuestions);
+    res.status(200).json(marksWithUsernamesAndQuestions);
+  } catch (error) {
+    // Handle errors
+    console.error("Error fetching marks:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
