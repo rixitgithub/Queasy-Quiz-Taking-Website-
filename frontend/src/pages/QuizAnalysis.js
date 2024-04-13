@@ -14,6 +14,10 @@ const QuizAnalysis = () => {
   const [showCustomTheme, setShowCustomTheme] = useState(true);
   const LPtheme = createTheme(getLPTheme(mode));
   const defaultTheme = createTheme({ palette: { mode } });
+  const [marksData, setMarksData] = useState([]);
+  const [filteredMarksData, setFilteredMarksData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [quizTitle, setQuizTitle] = useState("");
   const [chartData, setChartData] = useState({
     options: {
       chart: {
@@ -98,9 +102,59 @@ const QuizAnalysis = () => {
       },
     ],
   });
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [quizTitle, setQuizTitle] = useState("");
+  const [additionalChartData, setAdditionalChartData] = useState({
+    options: {
+      chart: {
+        id: "additional-stats-chart",
+        type: "line",
+      },
+      xaxis: {
+        categories: [],
+        labels: {
+          offsetY: 10, // Adjust label position lower
+        },
+      },
+      yaxis: {
+        title: {
+          text: "Marks",
+        },
+        labels: {
+          formatter: function (val) {
+            return val.toFixed(1); // Format values to single decimal point
+          },
+        },
+      },
+      plotOptions: {
+        line: {
+          markers: {
+            size: 0,
+          },
+        },
+      },
+    },
+    series: [
+      {
+        name: "Highest Marks",
+        type: "line",
+        data: [],
+      },
+      {
+        name: "Lowest Marks",
+        type: "line",
+        data: [],
+      },
+      {
+        name: "Median Marks",
+        type: "line",
+        data: [],
+      },
+      {
+        name: "Average Marks",
+        type: "line",
+        data: [],
+      },
+    ],
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +166,13 @@ const QuizAnalysis = () => {
         if (!marksResponse.ok || marksData.length === 0) {
           throw new Error("Failed to fetch marks data");
         }
+
+        setMarksData(marksData);
+        setFilteredMarksData(marksData);
+        // Filter marks data based on search query
+        const filteredData = marksData.filter((mark) =>
+          mark.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
         // Total Marks Chart Data
         const totalMarksMap = new Map();
@@ -169,10 +230,10 @@ const QuizAnalysis = () => {
         }));
 
         // Time Spent Chart Data
-        const uniqueQuestions = Array.from(
+        const uniqueQuestionsTime = Array.from(
           new Set(marksData.map((mark) => mark.questionText))
         );
-        const averageTimeSpent = uniqueQuestions.map((question) => {
+        const averageTimeSpent = uniqueQuestionsTime.map((question) => {
           const timeSpentForQuestion = marksData
             .filter((mark) => mark.questionText === question)
             .map((mark) => mark.timespent);
@@ -187,11 +248,95 @@ const QuizAnalysis = () => {
           options: {
             ...prevChartData.options,
             xaxis: {
-              categories: uniqueQuestions,
+              categories: uniqueQuestionsTime,
             },
           },
           series: [{ data: averageTimeSpent }],
         }));
+
+        // Additional Chart Data
+        const uniqueQuestions = Array.from(
+          new Set(marksData.map((mark) => mark.questionText))
+        );
+        const additionalChartData = {
+          options: {
+            chart: {
+              id: "additional-stats-chart",
+              type: "line",
+            },
+            xaxis: {
+              categories: uniqueQuestions,
+              labels: {
+                offsetY: 10, // Adjust label position lower
+              },
+            },
+            yaxis: {
+              title: {
+                text: "Marks",
+              },
+              labels: {
+                formatter: function (val) {
+                  return val.toFixed(1); // Format values to single decimal point
+                },
+              },
+            },
+            plotOptions: {
+              line: {
+                markers: {
+                  size: 0,
+                },
+              },
+            },
+          },
+          series: [
+            {
+              name: "Highest Marks",
+              type: "line",
+              data: uniqueQuestions.map((question) => {
+                const highestMark = Math.max(
+                  ...marksData
+                    .filter((mark) => mark.questionText === question)
+                    .map((mark) => mark.highestMarks)
+                );
+                return highestMark;
+              }),
+            },
+            {
+              name: "Lowest Marks",
+              type: "line",
+              data: uniqueQuestions.map((question) => {
+                const lowestMark = Math.min(
+                  ...marksData
+                    .filter((mark) => mark.questionText === question)
+                    .map((mark) => mark.lowestMarks)
+                );
+                return lowestMark;
+              }),
+            },
+            {
+              name: "Median Marks",
+              type: "line",
+              data: uniqueQuestions.map((question) => {
+                const medianMark = marksData
+                  .filter((mark) => mark.questionText === question)
+                  .map((mark) => mark.medianMarks);
+                return medianMark;
+              }),
+            },
+            {
+              name: "Average Marks",
+              type: "line",
+              data: uniqueQuestions.map((question) => {
+                const averageMark = marksData
+                  .filter((mark) => mark.questionText === question)
+                  .map((mark) => mark.averageMarks);
+                return averageMark;
+              }),
+            },
+          ],
+        };
+
+        setAdditionalChartData(additionalChartData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -200,27 +345,9 @@ const QuizAnalysis = () => {
     fetchData();
   }, [uniqueCode]);
 
-  useEffect(() => {
-    const fetchQuizTitle = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/title/${uniqueCode}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch quiz title");
-        }
-        const data = await response.json();
-        setQuizTitle(data.title);
-      } catch (error) {
-        console.error("Error fetching quiz title:", error);
-      }
-    };
-
-    fetchQuizTitle();
-  }, [uniqueCode]);
-
   const toggleColorMode = () => {
-    setMode((prev) => (prev === "dark" ? "light" : "dark"));
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
+    setShowCustomTheme((prev) => !prev);
   };
 
   const handleSearchChange = (e) => {
@@ -251,22 +378,30 @@ const QuizAnalysis = () => {
     series: [{ data: filteredSeriesData }],
   };
 
+  useEffect(() => {
+    const fetchQuizTitle = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quiz/title/${uniqueCode}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch quiz title");
+        }
+        const data = await response.json();
+        setQuizTitle(data.title);
+      } catch (error) {
+        console.error("Error fetching quiz title:", error);
+      }
+    };
+
+    fetchQuizTitle();
+  }, [uniqueCode]);
+
   return (
     <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
-      <Box
-        id="hero"
-        sx={(theme) => ({
-          width: "100%",
-          backgroundImage:
-            theme.palette.mode === "light"
-              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
-              : `linear-gradient(#02294F, ${theme.alpha("#090E10", 0.0)})`,
-          backgroundSize: "100% 20%",
-          backgroundRepeat: "no-repeat",
-        })}
-      >
-        <CssBaseline />
-        <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+      <CssBaseline />
+      <AppAppBar toggleColorMode={toggleColorMode} />
+      <Box sx={{ flexGrow: 1 }}>
         <Container
           sx={{
             display: "flex",
@@ -279,7 +414,7 @@ const QuizAnalysis = () => {
           style={{ width: "110%" }}
         >
           <Typography variant="h4" sx={{ mb: 2 }}>
-            ANALYSIS - {quizTitle}
+            MARKS ANALYSIS - {quizTitle}
           </Typography>
           <TextField
             label="Enter Username"
@@ -313,7 +448,7 @@ const QuizAnalysis = () => {
             sx={{
               display: "flex",
               justifyContent: "center",
-              width: "100%",
+              width: "95%",
               marginTop: { xs: 20, sm: 20 },
             }}
           >
@@ -375,6 +510,46 @@ const QuizAnalysis = () => {
                 options={timeSpentChartData.options}
                 series={timeSpentChartData.series}
                 type="area"
+                width="100%"
+              />
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              width: "95%",
+              marginTop: { xs: 20, sm: 20 },
+            }}
+          >
+            {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+
+            <Box
+              sx={{
+                width: "80%",
+                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                borderRadius: "8px",
+                boxShadow: showCustomTheme
+                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                padding: "20px",
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: "bold",
+                  marginBottom: "10px",
+                  color: mode === "light" ? "#000000" : "#FFFFFF",
+                }}
+              >
+                Marks Analysis per Question
+              </Typography>
+              {/* Additional Chart */}
+              <Chart
+                options={additionalChartData.options}
+                series={additionalChartData.series}
+                type="line"
                 width="100%"
               />
             </Box>

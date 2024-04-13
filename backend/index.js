@@ -1209,7 +1209,7 @@ app.get("/marks/:uniqueCode", async (req, res) => {
         .json({ message: "No marks found for this uniqueCode" });
     }
 
-    // Array to store marks with usernames, question text, and average time spent
+    // Array to store marks with usernames, question text, and additional statistics
     const marksWithUsernamesAndQuestions = [];
 
     // Loop through each mark
@@ -1229,14 +1229,28 @@ app.get("/marks/:uniqueCode", async (req, res) => {
         console.error("Question not found for mark:", mark);
         continue; // Skip this mark if the associated question is not found
       }
-      console.log("in the main ", mark.questionId);
+
       // Calculate average time spent for the question
       const { timespent } = await calculateAverageTime(
         mark.questionId,
         uniqueCode
       );
 
-      // Add mark data along with question text and average time spent to the array
+      // Calculate additional statistics
+      const marksForQuestion = allMarks.filter(
+        (m) => m.questionId === mark.questionId
+      );
+      const highestMarks = Math.max(...marksForQuestion.map((m) => m.marks));
+      const lowestMarks = Math.min(...marksForQuestion.map((m) => m.marks));
+      const marksArray = marksForQuestion.map((m) => m.marks);
+      const medianMarks =
+        marksArray.length > 0 ? calculateMedian(marksArray) : 0;
+      const averageMarks =
+        marksArray.length > 0
+          ? marksArray.reduce((acc, curr) => acc + curr, 0) / marksArray.length
+          : 0;
+
+      // Add mark data along with question text, additional statistics, and average time spent to the array
       marksWithUsernamesAndQuestions.push({
         username: mark.userId.fname + " " + mark.userId.lname,
         uniqueCode: mark.uniqueCode,
@@ -1245,11 +1259,14 @@ app.get("/marks/:uniqueCode", async (req, res) => {
         timespent,
         marks: mark.marks,
         comments: mark.comments,
+        highestMarks,
+        lowestMarks,
+        medianMarks,
+        averageMarks,
       });
     }
-
-    // If marks are found, return them with usernames, question text, and average time spent
     console.log({ marksWithUsernamesAndQuestions });
+    // If marks are found, return them with usernames, question text, and additional statistics
     res.status(200).json(marksWithUsernamesAndQuestions);
   } catch (error) {
     // Handle errors
@@ -1257,6 +1274,15 @@ app.get("/marks/:uniqueCode", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// Function to calculate the median of an array
+function calculateMedian(arr) {
+  const sortedArr = arr.sort((a, b) => a - b);
+  const mid = Math.floor(sortedArr.length / 2);
+  return sortedArr.length % 2 === 0
+    ? (sortedArr[mid - 1] + sortedArr[mid]) / 2
+    : sortedArr[mid];
+}
 
 // Start the server
 app.listen(PORT, () => {
