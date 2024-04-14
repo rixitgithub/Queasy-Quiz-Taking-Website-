@@ -15,15 +15,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware to authenticate JWT
 const authenticateJwt = (req, res, next) => {
+  console.log("this is trial");
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = authHeader.split(" ")[1];
+    console.log({ token });
     jwt.verify(token, SECRET, (err, decoded) => {
       if (err) {
         return res.sendStatus(403);
       }
       // Extract every piece of information from the decoded token
       req.user = decoded;
+      console.log({ decoded });
       next();
     });
   } else {
@@ -80,6 +83,8 @@ const quizSchema = new mongoose.Schema({
   autoAssignMarks: { type: Boolean, default: false }, // Automatic assignment of marks
   passingMarks: { type: Number, default: 60 }, // Passing marks for the quiz
   feedback: [{ type: String }], // Feedback array
+  attempted: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  isChecked: { type: Boolean, default: false },
 });
 
 const answerSchema = new mongoose.Schema({
@@ -1458,6 +1463,61 @@ app.get("/total-marks/:uniqueCode", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.get("/quizzes/user", authenticateJwt, async (req, res) => {
+  try {
+    console.log("hello");
+    // Extract user ID from the decoded token
+    const userId = req.user.id;
+
+    // Find all quizzes where the user has attempted
+    const quizzes = await Quiz.find({ attempted: userId });
+    console.log({ quizzes });
+    res.json({ quizzes });
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+app.post(
+  "/quizzes/user/:uniqueCode/attempt",
+  authenticateJwt,
+  async (req, res) => {
+    try {
+      // Extract user ID from the decoded token
+      const userId = req.user.id;
+      const uniqueCode = req.params.uniqueCode;
+      console.log({ userId }, { uniqueCode });
+      // Check if the user has already attempted the quiz
+      const quiz = await Quiz.findOne({ uniqueCode: req.params.uniqueCode });
+      if (!quiz) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      console.log({ quiz });
+      if (quiz.attempted.includes(userId)) {
+        return res
+          .status(400)
+          .json({ error: "Quiz already attempted by the user" });
+      }
+
+      // Update the quiz document to add the user ID to the attempted array
+      const updatedQuiz = await Quiz.findOneAndUpdate(
+        { uniqueCode: uniqueCode },
+        { $addToSet: { attempted: userId } },
+        { new: true }
+      );
+      console.log({ updatedQuiz });
+      if (!updatedQuiz) {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+
+      res.json({ message: "Quiz attempt recorded successfully" });
+    } catch (error) {
+      console.error("Error recording quiz attempt:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
 
 // Start the server
 app.listen(PORT, () => {

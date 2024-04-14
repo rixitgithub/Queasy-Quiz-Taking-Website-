@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 
 const Question = () => {
+  const [exitPopupAttempts, setExitPopupAttempts] = useState(2); // Remaining attempts for the exit popup
+  const [showExitPopup, setShowExitPopup] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [question, setQuestion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,31 @@ const Question = () => {
   const [attemptedQuiz, setAttemptedQuiz] = useState(false);
   const [qnaAnswer, setQnaAnswer] = useState(""); // Added state for QNA answer
   const { uniqueCode, questionId } = useParams();
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && exitPopupAttempts > 0) {
+        setShowExitPopup(true);
+        console.log("Exit popup shown");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [exitPopupAttempts]);
+
+  const handleCloseExitPopup = () => {
+    setShowExitPopup(false);
+    console.log("Exit popup closed");
+  };
+
+  const handleContinue = () => {
+    setExitPopupAttempts(exitPopupAttempts - 1);
+    handleCloseExitPopup();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -444,6 +471,21 @@ const Question = () => {
           )}
         </div>
       </div>
+      {/* Exit popup dialog */}
+      <Dialog open={showExitPopup} onClose={handleCloseExitPopup}>
+        <DialogTitle>Invalid Activity Detected</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            You have {exitPopupAttempts} chances left. Please remain on this
+            window to successfully complete your quiz.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleContinue} color="primary">
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

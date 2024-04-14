@@ -11,11 +11,13 @@ import {
   IconButton,
   Tooltip,
   Switch,
+  Divider,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { alpha } from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import { Link } from "react-router-dom";
@@ -24,7 +26,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import { alpha } from "@mui/material";
+import Footer from "../components/Footer";
 
 export default function SignIn() {
   const [mode, setMode] = React.useState("light");
@@ -172,16 +174,37 @@ export default function SignIn() {
               <Typography variant="h1" sx={{ mb: 2 }}>
                 Your Dashboard
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  navigate("/create");
+              <Box
+                sx={{
+                  mt: { xs: 1, sm: 3 },
+                  alignSelf: "center",
+                  width: "110%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
-                sx={{ position: "relative" }}
               >
-                Create a quiz
-              </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    navigate("/create");
+                  }}
+                  sx={{ position: "relative", mb: 2 }} // Add margin bottom
+                >
+                  Create a quiz
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    navigate("/attempts");
+                  }}
+                  sx={{ position: "relative" }}
+                >
+                  Your Attempts
+                </Button>
+              </Box>
             </Box>
             <Box
               sx={{
@@ -330,6 +353,8 @@ export default function SignIn() {
             )}
           </Box>
         </Container>
+        <Divider />
+        <Footer />
       </Box>
     </ThemeProvider>
   );
