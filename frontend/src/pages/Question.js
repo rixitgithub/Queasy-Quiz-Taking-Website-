@@ -150,6 +150,7 @@ const Question = () => {
 
   const saveAnswer = async () => {
     try {
+      const answerToSend = answer !== "" ? answer : null; // Check if answer is not empty
       await fetch(`http://localhost:1234/${uniqueCode}/save-answer`, {
         method: "POST",
         headers: {
@@ -158,7 +159,7 @@ const Question = () => {
         },
         body: JSON.stringify({
           questionId: questionId,
-          answer: answer,
+          answer: answerToSend, // Send null if answer is empty
         }),
       });
       console.log("Answer saved successfully");
@@ -179,25 +180,37 @@ const Question = () => {
           remainingTime: remainingTime,
         }),
       });
-    } catch (error) {
-      console.error("Error updating remaining time:", error.message);
-    }
 
-    saveAnswer();
+      saveAnswer();
 
-    const currentIndex = questionIds.indexOf(questionId);
-    const nextQuestionId = questionIds[currentIndex + 1];
+      const currentIndex = questionIds.indexOf(questionId);
+      const nextQuestionId = questionIds[currentIndex + 1];
 
-    if (currentIndex === questionIds.length - 1) {
-      if (quiz && quiz.autoAssignMarks) {
-        window.location.href = `/quiz/${uniqueCode}/result`;
+      if (currentIndex === questionIds.length - 1) {
+        // Send a backend request to record quiz attempt when reaching the end
+        await fetch(
+          `http://localhost:1234/quizzes/user/${uniqueCode}/attempt`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (quiz && quiz.autoAssignMarks) {
+          window.location.href = `/quiz/${uniqueCode}/result`;
+        } else {
+          window.location.href = `/quiz/${uniqueCode}/end`;
+          setAttemptedQuiz(true);
+        }
       } else {
-        window.location.href = `/quiz/${uniqueCode}/end`;
-        setAttemptedQuiz(true);
+        const nextQuestionUrl = `/quiz/${uniqueCode}/questions/${nextQuestionId}`;
+        window.location.href = nextQuestionUrl;
       }
-    } else {
-      const nextQuestionUrl = `/quiz/${uniqueCode}/questions/${nextQuestionId}`;
-      window.location.href = nextQuestionUrl;
+    } catch (error) {
+      console.error("Error handling next question:", error.message);
     }
   };
 

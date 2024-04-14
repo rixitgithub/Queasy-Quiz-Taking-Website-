@@ -191,10 +191,11 @@ const UserCheckResult = () => {
           if (nextIndex < userIds.length) {
             setMarks({});
             setComments({}); // Reset comments when navigating to next user
+            console.log("unique code issndo", uniqueCode);
             navigate(`/quiz/${uniqueCode}/user/${userIds[nextIndex]}`);
             return nextIndex;
           } else {
-            navigate(`/quiz/:${uniqueCode}/analysis`);
+            navigate(`/quiz/${uniqueCode}/analysis`);
             return prevIndex; // No change in index if navigating to analysis
           }
         });
@@ -220,6 +221,7 @@ const UserCheckResult = () => {
   }, [userIds]);
 
   // Function to send marks and comments to the backend
+  // Function to send marks and comments to the backend
   const sendMarks = async () => {
     try {
       setIsSaving(true); // Set saving status to true while sending data
@@ -230,9 +232,14 @@ const UserCheckResult = () => {
         marks: marks,
         comments: comments, // Include comments in the data
         uniqueCode: uniqueCode,
+        answers: questions.map((question) => ({
+          questionId: question.questionId,
+          isCorrect: question.isCorrect || false, // Send isCorrect based on checkbox status
+          score: marks[question.questionId] || 0, // Send 0 if score is not assigned
+        })),
       };
 
-      // Make a POST request to send marks and comments to the backend
+      // Make a POST request to send marks, comments, and isCorrect to the backend
       const response = await fetch("http://localhost:1234/saveMarks", {
         method: "POST",
         headers: {
@@ -260,6 +267,8 @@ const UserCheckResult = () => {
   };
 
   // Function to handle manual sending of marks and comments to the backend
+  // Function to handle sending of marks and comments to the backend
+  // Function to handle sending of marks and comments to the backend
   const handleSendMarks = () => {
     // Check if marks or comments have changed
     const marksChanged = Object.keys(marks).some(
@@ -269,9 +278,17 @@ const UserCheckResult = () => {
       (questionId) => comments[questionId] !== ""
     );
 
-    // If marks or comments have changed, or if it's not saved yet, send marks and comments
-    if (marksChanged || commentsChanged || !isSaved) {
+    // Check if any score input field is empty
+    const anyScoreEmpty = questions.some(
+      (question) => marks[question.questionId] === ""
+    );
+
+    // If marks or comments have changed, or if it's not saved yet, and no score input field is empty, send marks and comments
+    if ((marksChanged || commentsChanged || !isSaved) && !anyScoreEmpty) {
       sendMarks(); // Call sendMarks function to send marks and comments to the backend
+    } else {
+      // If any score input field is empty, show an alert message
+      alert("Please assign marks to all questions before sending.");
     }
   };
 
@@ -368,13 +385,36 @@ const UserCheckResult = () => {
                                 margin="normal"
                                 value={comments[answer.questionId] || ""}
                                 onChange={(e) => {
-                                  handleTextFieldChange(); // Call handleTextFieldChange when text field is changed
+                                  handleTextFieldChange();
                                   const newComments = { ...comments };
                                   newComments[answer.questionId] =
                                     e.target.value;
                                   setComments(newComments);
                                 }}
                               />
+                              {/* Checkbox for indicating correct answer */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  mt: 1,
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`correct-answer-${index}`}
+                                  checked={answer.isCorrect || false}
+                                  onChange={(e) => {
+                                    const newAnswers = [...currentUserAnswers];
+                                    newAnswers[index].isCorrect =
+                                      e.target.checked;
+                                    setQuestions(newAnswers);
+                                  }}
+                                />
+                                <label htmlFor={`correct-answer-${index}`}>
+                                  Correct Answer
+                                </label>
+                              </Box>
                             </CardContent>
                           </Card>
                           <Box
@@ -393,13 +433,12 @@ const UserCheckResult = () => {
                               style={{
                                 width: "70px",
                                 marginRight: "0.5rem",
-                                padding: "0.5rem", // Add padding
-                                border: "1px solid #ccc", // Add border
-                                borderRadius: "4px", // Add border radius
+                                padding: "0.5rem",
+                                border: "1px solid #ccc",
+                                borderRadius: "4px",
                               }}
                               value={marks[answer.questionId] || ""}
                               onChange={(e) => {
-                                // Handle input change
                                 const newMarks = { ...marks };
                                 newMarks[answer.questionId] = e.target.value;
                                 setMarks(newMarks);
@@ -410,7 +449,6 @@ const UserCheckResult = () => {
                                 }));
                               }}
                             />
-
                             <Typography
                               variant="body1"
                               style={{ width: "3rem" }}
@@ -429,13 +467,13 @@ const UserCheckResult = () => {
                                 }));
                               }}
                               style={{
-                                padding: "0.5rem 1rem", // Add padding
-                                marginLeft: "1rem", // Add margin
-                                backgroundColor: "#4caf50", // Set background color
-                                color: "#fff", // Set text color
-                                border: "none", // Remove border
-                                borderRadius: "4px", // Add border radius
-                                cursor: "pointer", // Add cursor pointer
+                                padding: "0.5rem 1rem",
+                                marginLeft: "1rem",
+                                backgroundColor: "#4caf50",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "4px",
+                                cursor: "pointer",
                               }}
                             >
                               Full Marks

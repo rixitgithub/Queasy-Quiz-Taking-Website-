@@ -20,8 +20,6 @@ const AnswersByQuiz = () => {
           ...new Set(data.answers.map((answer) => answer.userId)),
         ];
         setAnswers(uniqueUserIds);
-        console.log(uniqueUserIds);
-        console.log(uniqueUserIds[0]);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching answers for the quiz:", error);
@@ -55,6 +53,29 @@ const AnswersByQuiz = () => {
   const goToUserPage = (userId) => {
     // Navigate to the user's page using window location
     navigate(`/quiz/${uniqueCode}/user/${answers[0]}`);
+  };
+
+  const handleViewResults = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:1234/quiz/${uniqueCode}/isChecked`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ isChecked: true }),
+        }
+      );
+      if (response.ok) {
+        console.log("Quiz results viewed successfully");
+        // You can add additional logic here if needed
+      } else {
+        console.error("Failed to view quiz results");
+      }
+    } catch (error) {
+      console.error("Error viewing quiz results:", error);
+    }
   };
 
   // Handle Enter key press event
@@ -93,6 +114,10 @@ const AnswersByQuiz = () => {
               Go to First User
             </button>
           )}
+          {/* Button to view results */}
+          <button onClick={handleViewResults}>
+            Show Results to the participants
+          </button>
         </div>
       )}
       {/* Listen for Enter key press event */}

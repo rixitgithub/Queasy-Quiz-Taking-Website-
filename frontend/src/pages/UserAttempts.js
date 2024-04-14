@@ -42,7 +42,9 @@ const QuizAttemptsPage = () => {
         if (!response.ok) {
           throw new Error("Failed to fetch quiz attempts");
         }
+
         const data = await response.json();
+        console.log({ data });
         if (Array.isArray(data.quizzes)) {
           setQuizAttempts(data.quizzes);
         } else {
@@ -63,7 +65,7 @@ const QuizAttemptsPage = () => {
   };
 
   const handleQuizClick = (quiz) => {
-    if (quiz.checked) {
+    if (quiz.isChecked) {
       navigate(`/quiz/${quiz.uniqueCode}/user/analysis`);
     } else {
       setSelectedQuiz(quiz);
@@ -135,13 +137,17 @@ const QuizAttemptsPage = () => {
                   sx={{
                     width: "350px",
                     m: 2,
-                    cursor: quiz.checked ? "pointer" : "default",
+                    cursor: quiz.isChecked ? "pointer" : "default",
                     boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                    backgroundColor: quiz.isLive ? "lightgreen" : "inherit",
+                    backgroundColor: quiz.isChecked
+                      ? quiz.isLive
+                        ? "inherit"
+                        : "lightgreen"
+                      : "inherit", // Modify the background color conditionally
                     position: "relative",
                     transition: "transform 0.2s",
                     "&:hover": {
-                      transform: quiz.checked ? "scale(1.05)" : "none",
+                      transform: quiz.isChecked ? "scale(1.05)" : "none",
                     },
                   }}
                   onClick={() => handleQuizClick(quiz)}
@@ -159,13 +165,13 @@ const QuizAttemptsPage = () => {
                         top: "10px",
                         right: "10px",
                         borderRadius: "10px",
-                        backgroundColor: quiz.checked ? "green" : "red",
+                        backgroundColor: quiz.isChecked ? "green" : "red",
                         color: "white",
                         padding: "4px 8px",
                       }}
                     >
                       <Typography variant="body2" color="inherit">
-                        {quiz.checked ? "Checked" : "Not Checked"}
+                        {quiz.isChecked ? "Checked" : "Not Checked"}
                       </Typography>
                     </Box>
                     <Typography

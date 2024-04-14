@@ -15,18 +15,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware to authenticate JWT
 const authenticateJwt = (req, res, next) => {
-  console.log("this is trial");
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = authHeader.split(" ")[1];
-    console.log({ token });
     jwt.verify(token, SECRET, (err, decoded) => {
       if (err) {
         return res.sendStatus(403);
       }
       // Extract every piece of information from the decoded token
       req.user = decoded;
-      console.log({ decoded });
       next();
     });
   } else {
@@ -98,7 +95,6 @@ const answerSchema = new mongoose.Schema({
   },
   answer: {
     type: String,
-    required: true,
   },
   uniqueCode: {
     type: String,
@@ -173,10 +169,13 @@ const markstrialSchema = new mongoose.Schema({
   },
   marks: {
     type: Number,
-    required: true,
   },
   comments: {
     type: String,
+  },
+  isCorrect: {
+    type: Boolean,
+    default: false, // Default value if not provided
   },
 });
 
@@ -680,15 +679,22 @@ app.get("/time-remaining/:questionId", authenticateJwt, async (req, res) => {
 // Save answer route
 app.post("/:uniqueCode/save-answer", authenticateJwt, async (req, res) => {
   const { questionId, answer } = req.body; // Extract questionId and answer from request body
+  console.log("questionId", questionId);
+  console.log("answer", answer);
   const userId = req.user.id; // Extract user ID from the authenticated token
   const uniqueCode = req.params.uniqueCode;
+
+  // Check if answer is undefined and assign null if true
+  const answerToSave = answer !== undefined ? answer : null;
+  console.log("asnwer to save", answerToSave);
   try {
     // Check if an answer already exists for the same user and question combination
     let existingAnswer = await Answer.findOne({ questionId, userId });
-
+    console.log({ existingAnswer });
     if (existingAnswer) {
+      console.log("existing answer");
       // If an answer exists, update it with the new answer
-      existingAnswer.answer = answer;
+      existingAnswer.answer = answerToSave; // Use the modified answer value
       await existingAnswer.save();
       res.status(200).json({ message: "Answer updated successfully" });
     } else {
@@ -696,10 +702,11 @@ app.post("/:uniqueCode/save-answer", authenticateJwt, async (req, res) => {
       const newAnswer = new Answer({
         questionId,
         userId,
-        answer,
+        answer: answerToSave, // Use the modified answer value
         uniqueCode,
       });
       await newAnswer.save();
+      console.log("newanswer", newAnswer);
       console.log("saved");
       res.status(201).json({ message: "Answer saved successfully" });
     }
@@ -1071,7 +1078,8 @@ app.get("/quiz/:uniqueCode/user/:userId/", async (req, res) => {
 
 app.post("/saveMarks", async (req, res) => {
   try {
-    const { userId, marks, uniqueCode, comments } = req.body;
+    const { userId, uniqueCode, comments, answers } = req.body;
+    console.log("anser", answers);
 
     // Check if marks entries already exist for the combination of userId and uniqueCode
     const existingMarks = await MarksTrial.find({
@@ -1088,16 +1096,21 @@ app.post("/saveMarks", async (req, res) => {
     }
 
     // Create new marks and comments entries for each questionId
-    for (const questionId in marks) {
+    for (const answer of answers) {
+      const { questionId, score } = answer;
+
       // Create a new Marks document
       const marksEntry = new MarksTrial({
         userId: userId,
         questionId: questionId,
-        marks: marks[questionId], // Get marks for the specific questionId
+        marks: score || null, // If score is not assigned, set it to 0
         comments: comments[questionId], // Get comments for the specific questionId
         uniqueCode: uniqueCode, // Include uniqueCode in the new marks entry
+        isCorrect: answer.isCorrect || false, // Get isCorrect status from the answer
       });
-      console.log(marksEntry);
+
+      console.log("final", marksEntry);
+
       // Save the marks entry
       await marksEntry.save();
     }
@@ -1518,6 +1531,31 @@ app.post(
     }
   }
 );
+
+app.put("/quiz/:uniqueCode/isChecked", async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+
+    // Find the quiz by uniqueCode
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    // Update isChecked property
+    quiz.isChecked = true;
+
+    // Save the updated quiz
+    await quiz.save();
+
+    // Send success response
+    res.json({ message: "Quiz isChecked property updated successfully" });
+  } catch (error) {
+    console.error("Error updating quiz isChecked property:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 // Start the server
 app.listen(PORT, () => {
