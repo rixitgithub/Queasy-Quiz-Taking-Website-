@@ -1081,20 +1081,13 @@ app.get("/quiz/:uniqueCode/user/:userId/", async (req, res) => {
 app.post("/saveMarks", async (req, res) => {
   try {
     const { userId, uniqueCode, comments, answers } = req.body;
-    console.log("anser", answers);
 
     // Check if marks entries already exist for the combination of userId and uniqueCode
-    const existingMarks = await MarksTrial.find({
-      userId: userId,
-      uniqueCode: uniqueCode,
-    });
+    const existingMarks = await MarksTrial.find({ userId, uniqueCode });
 
     // If existing marks entries are found, delete them
     if (existingMarks.length > 0) {
-      await MarksTrial.deleteMany({
-        userId: userId,
-        uniqueCode: uniqueCode,
-      });
+      await MarksTrial.deleteMany({ userId, uniqueCode });
     }
 
     // Create new marks and comments entries for each questionId
@@ -1103,15 +1096,13 @@ app.post("/saveMarks", async (req, res) => {
 
       // Create a new Marks document
       const marksEntry = new MarksTrial({
-        userId: userId,
-        questionId: questionId,
-        marks: score || null, // If score is not assigned, set it to 0
+        userId,
+        questionId,
+        marks: score || null, // If score is not assigned, set it to null
         comments: comments[questionId], // Get comments for the specific questionId
-        uniqueCode: uniqueCode, // Include uniqueCode in the new marks entry
+        uniqueCode,
         isCorrect: answer.isCorrect || false, // Get isCorrect status from the answer
       });
-
-      console.log("final", marksEntry);
 
       // Save the marks entry
       await marksEntry.save();
@@ -1594,6 +1585,57 @@ app.get("/quiz/:uniqueCode/questionnum", authenticateJwt, async (req, res) => {
   } catch (error) {
     console.error("Error fetching question numbers:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/quiz/:uniqueCode/score", authenticateJwt, async (req, res) => {
+  const { uniqueCode } = req.params;
+  const userId = req.user.id;
+  console.log({ userId });
+  try {
+    // Find all marks obtained for the particular quiz
+    const marksList = await MarksTrial.find({ uniqueCode });
+
+    // Group marks by user ID
+    const marksByUser = {};
+    marksList.forEach((mark) => {
+      if (!marksByUser[mark.userId]) {
+        marksByUser[mark.userId] = 0;
+      }
+      marksByUser[mark.userId] += mark.marks;
+    });
+
+    // Prepare response object with total marks for each user
+    const totalMarksByUser = [];
+    for (const userId in marksByUser) {
+      totalMarksByUser.push({ userId, totalMarks: marksByUser[userId] });
+    }
+
+    // Calculate highest, average, and marks of the specific user
+    let highestMarks = 0;
+    let totalMarks = 0;
+    totalMarksByUser.forEach((userMarks) => {
+      highestMarks = Math.max(highestMarks, userMarks.totalMarks);
+      totalMarks += userMarks.totalMarks;
+    });
+    const averageMarks = totalMarks / totalMarksByUser.length;
+    const userMarks = totalMarksByUser.find((marks) => marks.userId === userId);
+
+    // Retrieve the quiz schema and calculate total marks
+    const quiz = await Quiz.findOne({ uniqueCode });
+    if (!quiz) {
+      throw new Error("Quiz not found");
+    }
+    const totalQuizMarks = quiz.questions.reduce((total, question) => {
+      return total + question.marks; // Sum up the marks of each question
+    }, 0);
+
+    // Send response with all statistics
+    console.log({ highestMarks, averageMarks, userMarks, totalQuizMarks });
+    res.json({ highestMarks, averageMarks, userMarks, totalQuizMarks });
+  } catch (error) {
+    console.error("Error fetching total marks:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

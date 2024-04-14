@@ -5,7 +5,6 @@ import {
   Container,
   CssBaseline,
   Divider,
-  Paper,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material";
@@ -27,9 +26,56 @@ export default function UserAnalysis() {
       },
       labels: ["Correct Answers", "Incorrect Answers", "Unattempted Questions"],
       colors: ["#7cb5ec", "#f15c80", "#808080"],
+      plotOptions: {
+        pie: {
+          dataLabels: {
+            enabled: true,
+            format: "{value}", // Display numbers instead of percentages
+          },
+        },
+      },
     },
     series: [0, 0, 0],
   });
+  const [radialBarData, setRadialBarData] = useState({
+    options: {
+      chart: {
+        height: 280,
+        type: "radialBar",
+      },
+      series: [0, 0, 0],
+      plotOptions: {
+        radialBar: {
+          dataLabels: {
+            total: {
+              show: false,
+              label: "Marks",
+              formatter: function (val) {
+                return parseFloat(val).toFixed(1); // Display one decimal place
+              },
+            },
+          },
+        },
+      },
+      labels: ["Highest Score", "Average Score", "Your Score"],
+      tooltip: {
+        enabled: true,
+        y: {
+          formatter: function (val) {
+            return parseFloat(val).toFixed(1); // Display one decimal place
+          },
+        },
+      },
+      center: {
+        text: "", // Set the center text to an empty string
+      },
+    },
+    series: [0, 0, 0],
+  });
+
+  const [totalQuizMarks, setTotalQuizMarks] = useState(0); // State to store total marks of the quiz
+  const [averageMarks, setAverageMarks] = useState(0); // State to store average marks
+  const [userData, setUserData] = useState(0); // State to store user data
 
   const toggleColorMode = () => {
     setMode((prevMode) => (prevMode === "dark" ? "light" : "dark"));
@@ -37,32 +83,67 @@ export default function UserAnalysis() {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("this is unique", uniqueCode);
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(
+
+        // Fetch question analysis data
+        const questionAnalysisResponse = await fetch(
           `http://localhost:1234/quiz/${uniqueCode}/questionnum`,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch analysis data");
+        if (!questionAnalysisResponse.ok) {
+          throw new Error("Failed to fetch question analysis data");
         }
-        const data = await response.json();
+        const questionAnalysisData = await questionAnalysisResponse.json();
         setMarksDistribution({
           ...marksDistribution,
           series: [
-            data.correctCount,
-            data.incorrectCount,
-            data.unattemptedCount,
+            questionAnalysisData.correctCount,
+            questionAnalysisData.incorrectCount,
+            questionAnalysisData.unattemptedCount,
           ],
         });
+
+        // Fetch score data
+        const scoreResponse = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}/score`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!scoreResponse.ok) {
+          throw new Error("Failed to fetch score data");
+        }
+        const scoreData = await scoreResponse.json();
+        const highestPercentage =
+          (scoreData.highestMarks / scoreData.totalQuizMarks) * 100;
+        const averagePercentage =
+          (scoreData.averageMarks / scoreData.totalQuizMarks) * 100;
+        const userPercentage =
+          (scoreData.userMarks.totalMarks / scoreData.totalQuizMarks) * 100;
+        setRadialBarData({
+          ...radialBarData,
+          series: [highestPercentage, averagePercentage, userPercentage],
+        });
+
+        // Set total quiz marks
+        setTotalQuizMarks(scoreData.totalQuizMarks);
+
+        // Set average marks
+        setAverageMarks(scoreData.averageMarks);
+
+        // Set user data
+        setUserData(scoreData.userMarks.totalMarks);
       } catch (error) {
-        console.error("Error fetching analysis data:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -156,13 +237,23 @@ export default function UserAnalysis() {
                   color: mode === "light" ? "#000000" : "#FFFFFF",
                 }}
               >
-                Quiz Feedback
+                Score Analysis
               </Typography>
-
+              <Chart
+                options={radialBarData.options}
+                series={radialBarData.series}
+                type="radialBar"
+                height={280}
+              />
               <Typography
-                variant="body1"
-                sx={{ color: mode === "light" ? "#000000" : "#FFFFFF" }}
-              ></Typography>
+                variant="subtitle1"
+                sx={{
+                  color: mode === "light" ? "#000000" : "#FFFFFF",
+                  marginTop: "10px",
+                }}
+              >
+                Your Marks: {userData.toFixed(2)}
+              </Typography>
             </Box>
           </Box>
           <Divider />
