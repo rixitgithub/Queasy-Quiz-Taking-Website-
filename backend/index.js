@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Middleware to authenticate JWT
 const authenticateJwt = (req, res, next) => {
+  console.log("hello");
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = authHeader.split(" ")[1];
@@ -24,6 +25,7 @@ const authenticateJwt = (req, res, next) => {
       }
       // Extract every piece of information from the decoded token
       req.user = decoded;
+      console.log(req.user.id);
       next();
     });
   } else {
@@ -1553,6 +1555,44 @@ app.put("/quiz/:uniqueCode/isChecked", async (req, res) => {
     res.json({ message: "Quiz isChecked property updated successfully" });
   } catch (error) {
     console.error("Error updating quiz isChecked property:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/quiz/:uniqueCode/questionnum", authenticateJwt, async (req, res) => {
+  const userId = req.user.id;
+  const { uniqueCode } = req.params;
+  console.log(uniqueCode, userId);
+  try {
+    // Find the number of correct questions
+    const correctCount = await MarksTrial.countDocuments({
+      uniqueCode,
+      userId,
+      isCorrect: true,
+    });
+
+    // Find the number of incorrect questions
+    const incorrectCount = await MarksTrial.countDocuments({
+      uniqueCode,
+      userId,
+      isCorrect: false,
+    });
+
+    // Find the number of unattempted questions
+    const unattemptedCount = await Answer.countDocuments({
+      uniqueCode,
+      userId,
+      answer: null,
+    });
+
+    res.json({
+      correctCount,
+      incorrectCount,
+      unattemptedCount,
+    });
+    console.log(correctCount, incorrectCount, unattemptedCount);
+  } catch (error) {
+    console.error("Error fetching question numbers:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

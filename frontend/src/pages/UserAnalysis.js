@@ -13,9 +13,11 @@ import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Footer from "../components/Footer";
 import Chart from "react-apexcharts";
+import { useParams } from "react-router-dom";
 
 export default function UserAnalysis() {
   const [mode, setMode] = useState("light");
+  const { uniqueCode } = useParams();
   const [showCustomTheme, setShowCustomTheme] = useState(true);
   const [marksDistribution, setMarksDistribution] = useState({
     options: {
@@ -26,7 +28,7 @@ export default function UserAnalysis() {
       labels: ["Correct Answers", "Incorrect Answers", "Unattempted Questions"],
       colors: ["#7cb5ec", "#f15c80", "#808080"],
     },
-    series: [0, 0, 0], // Initially all counts are set to 0
+    series: [0, 0, 0],
   });
 
   const toggleColorMode = () => {
@@ -34,19 +36,38 @@ export default function UserAnalysis() {
   };
 
   useEffect(() => {
-    // Example data (you can replace it with your actual data)
-    const correctAnswers = 20;
-    const incorrectAnswers = 5;
-    const totalQuestions = 30;
-    const unattemptedQuestions =
-      totalQuestions - correctAnswers - incorrectAnswers;
+    const fetchData = async () => {
+      console.log("this is unique", uniqueCode);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}/questionnum`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch analysis data");
+        }
+        const data = await response.json();
+        setMarksDistribution({
+          ...marksDistribution,
+          series: [
+            data.correctCount,
+            data.incorrectCount,
+            data.unattemptedCount,
+          ],
+        });
+      } catch (error) {
+        console.error("Error fetching analysis data:", error);
+      }
+    };
 
-    // Update series data with calculated values
-    setMarksDistribution({
-      ...marksDistribution,
-      series: [correctAnswers, incorrectAnswers, unattemptedQuestions],
-    });
-  }, []);
+    fetchData();
+  }, [uniqueCode]);
 
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
@@ -103,7 +124,7 @@ export default function UserAnalysis() {
                   color: mode === "light" ? "#000000" : "#FFFFFF",
                 }}
               >
-                Marks Distribution
+                Question Analysis
               </Typography>
               <Chart
                 options={marksDistribution.options}
@@ -113,7 +134,6 @@ export default function UserAnalysis() {
               />
             </Box>
 
-            {/* Time Spent Chart */}
             <Box
               sx={{
                 width: "50%",
