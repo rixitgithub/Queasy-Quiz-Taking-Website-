@@ -60,13 +60,42 @@ const QuizAttemptsPage = () => {
     fetchQuizAttempts();
   }, []);
 
+  const [userId, setUserId] = useState();
+
+  useEffect(() => {
+    const userDetails = async () => {
+      try {
+        const response = await fetch("http://localhost:1234/userId", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch quiz attempts");
+        }
+
+        const user = await response.json();
+        console.log({ user });
+        setUserId(user);
+      } catch (error) {
+        console.error("Error fetching quiz attempts:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    userDetails();
+  }, []);
+
   const toggleColorMode = () => {
     setMode((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   const handleQuizClick = (quiz) => {
     if (quiz.isChecked) {
-      navigate(`/quiz/${quiz.uniqueCode}/user/analysis`);
+      navigate(`/quiz/${quiz.uniqueCode}/analysis/${userId}`);
     } else {
       setSelectedQuiz(quiz);
       setPopupOpen(true);

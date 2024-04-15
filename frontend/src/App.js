@@ -50,7 +50,7 @@ function App() {
           <Route path="/quiz/:uniqueCode/analysis" element={<QuizAnalysis />} />
           <Route path="/attempts" element={<UserAttempts />} />
           <Route
-            path="/quiz/:uniqueCode/user/analysis"
+            path="/quiz/:uniqueCode/analysis/:userId"
             element={<UserAnalysis />}
           />
 

@@ -1883,6 +1883,38 @@ app.get("/:uniqueCode/user/rank", authenticateJwt, async (req, res) => {
   }
 });
 
+app.get("/userId", authenticateJwt, (req, res) => {
+  const userId = req.user.id;
+  res.json(userId);
+});
+
+app.get("/quiz/:uniqueCode/comments", authenticateJwt, async (req, res) => {
+  const { uniqueCode } = req.params;
+  const userId = req.user.id;
+  console.log("vodfmbdfbmdfkbmdfxmk");
+  try {
+    // Find all marks for the given unique code and user ID
+    const marks = await MarksTrial.find({ uniqueCode, userId });
+    console.log({ marks });
+    // Extract comments from marks
+    const comments = marks.map((mark) => ({
+      questionId: mark.questionId,
+      comment: mark.comments,
+    }));
+    if (comments.length === 0) {
+      // If comments are not present, send an empty string
+      res.json("");
+    } else {
+      // If comments are present, send the comments array
+      console.log(comments);
+      res.json(comments);
+    }
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on Port ${PORT}`);

@@ -23,7 +23,7 @@ import { useParams } from "react-router-dom";
 
 export default function UserAnalysis() {
   const [mode, setMode] = useState("light");
-  const { uniqueCode } = useParams();
+  const { uniqueCode, userId } = useParams();
   const [showCustomTheme, setShowCustomTheme] = useState(true);
   const [marksDistribution, setMarksDistribution] = useState({
     options: {
@@ -136,6 +136,11 @@ export default function UserAnalysis() {
   const [totalQuizMarks, setTotalQuizMarks] = useState(0); // State to store total marks of the quiz
   const [averageMarks, setAverageMarks] = useState(0); // State to store average marks
   const [userData, setUserData] = useState(0); // State to store user data
+  const [answers, setAnswers] = useState([]);
+  const [questions, setQuestions] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
 
   const [timeDistribution, setTimeDistribution] = useState({
     options: {
@@ -161,6 +166,53 @@ export default function UserAnalysis() {
   const toggleColorMode = () => {
     setMode((prevMode) => (prevMode === "dark" ? "light" : "dark"));
   };
+
+  const [answerData, setAnswerData] = useState([]);
+
+  useEffect(() => {
+    const fetchAnswers = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}/answers`
+        );
+        const data = await response.json();
+        console.log("this is fuck data", data);
+        setAnswerData(data.answers);
+        setAnswers(data.answers);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching answers for the quiz:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchAnswers();
+  }, [uniqueCode]);
+
+  useEffect(() => {
+    const fetchQuestionDetails = async () => {
+      try {
+        const promises = answers.map(async (answer) => {
+          const response = await fetch(
+            `http://localhost:1234/questions/${answer.questionId}`
+          );
+          const data = await response.json();
+          return {
+            ...answer,
+            questionText: data.question.text,
+            totalmarks: data.question.marks,
+          };
+        });
+        const answersWithQuestions = await Promise.all(promises);
+        console.log("questioncheck", answersWithQuestions);
+        setQuestions(answersWithQuestions);
+      } catch (error) {
+        console.error("Error fetching question details:", error);
+      }
+    };
+
+    fetchQuestionDetails();
+  }, [answers]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -516,6 +568,51 @@ export default function UserAnalysis() {
     fetchData();
   }, [uniqueCode]);
 
+  const [commentsData, setCommentsData] = useState([]); // State to store comments for each question
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        console.log("boom boom");
+        const response = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}/comments`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch comments data");
+        }
+        const commentsData = await response.json();
+        console.log("comments data", commentsData);
+        setCommentsData(commentsData);
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      }
+    };
+
+    fetchComments();
+  }, [uniqueCode]);
+
+  const currentUserAnswers = questions
+    .filter((question) => question.userId === userId)
+    .map((question) => {
+      const commentObj = commentsData.find(
+        (comment) => comment.questionId === question.questionId
+      );
+      return {
+        ...question,
+        comments: commentObj ? commentObj.comment : "-", // Default to "-" if comment not found
+        marks:
+          marksData.find((mark) => mark.questionId === question.questionId)
+            ?.marks || 0,
+      };
+    });
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -601,7 +698,7 @@ export default function UserAnalysis() {
               display: "flex",
               justifyContent: "center",
               width: "95%",
-              marginTop: { xs: 20, sm: 20 },
+              marginTop: { xs: 5, sm: 5 },
             }}
           >
             <Box
@@ -614,7 +711,51 @@ export default function UserAnalysis() {
                   : "0px 2px 4px rgba(255, 255, 255, 0.1)",
                 padding: "20px",
               }}
-            ></Box>
+            >
+              <TableContainer component={Paper} sx={{ borderRadius: "8px" }}>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Question Number</TableCell>
+                      <TableCell>Question Text</TableCell>
+                      <TableCell>Answer</TableCell>
+                      <TableCell>Remarks</TableCell>
+                      <TableCell align="right">Marks Obtained</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {currentUserAnswers.map((answer, index) => (
+                      <TableRow key={index}>
+                        <TableCell style={{ paddingRight: "16px" }}>
+                          Q{index + 1}
+                        </TableCell>
+                        <TableCell style={{ paddingRight: "16px" }}>
+                          {answer.questionText}
+                        </TableCell>
+                        <TableCell style={{ paddingRight: "16px" }}>
+                          {answer.answer}
+                        </TableCell>
+                        <TableCell style={{ paddingRight: "16px" }}>
+                          {answer.comments}
+                        </TableCell>
+                        <TableCell align="right">{answer.marks}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                      <TableCell align="right">
+                        {marksData
+                          .reduce((total, mark) => total + mark.marks, 0)
+                          .toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           </Box>
 
           <Box
