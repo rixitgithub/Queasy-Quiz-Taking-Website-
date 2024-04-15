@@ -6,6 +6,13 @@ import {
   CssBaseline,
   Divider,
   Typography,
+  Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
 } from "@mui/material";
 import { alpha } from "@mui/material";
 import getLPTheme from "../getLPTheme";
@@ -169,6 +176,7 @@ export default function UserAnalysis() {
           }
         );
         const marksData = await marksResponse.json();
+        console.log("Marks Data:", marksData);
         if (!marksResponse.ok || marksData.length === 0) {
           throw new Error("Failed to fetch marks data");
         }
@@ -456,6 +464,58 @@ export default function UserAnalysis() {
     fetchTimeDistribution();
   }, [uniqueCode]);
 
+  const [marksData, setMarksData] = useState([]);
+  const [userRank, setUserRank] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch marks for each question
+        const marksResponse = await fetch(
+          `http://localhost:1234/${uniqueCode}/user/marks`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (!marksResponse.ok) {
+          throw new Error("Failed to fetch marks data");
+        }
+        const marksData = await marksResponse.json();
+        if (!marksData || marksData.length === 0) {
+          throw new Error("No marks data found");
+        }
+        console.log("marrks", marksData);
+        setMarksData(marksData);
+
+        // Fetch user's rank
+        const rankResponse = await fetch(
+          `http://localhost:1234/${uniqueCode}/user/rank`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (!rankResponse.ok) {
+          throw new Error("Failed to fetch rank data");
+        }
+        const rankData = await rankResponse.json();
+        if (!rankData.rank) {
+          throw new Error("No rank data found");
+        }
+        setUserRank(rankData.rank);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [uniqueCode]);
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -483,6 +543,80 @@ export default function UserAnalysis() {
           }}
           style={{ width: "110%" }}
         >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              width: "95%",
+              marginTop: { xs: 20, sm: 20 },
+            }}
+          >
+            <Box
+              sx={{
+                width: "80%",
+                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                borderRadius: "8px",
+                boxShadow: showCustomTheme
+                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                padding: "20px",
+              }}
+            >
+              <TableContainer component={Paper} sx={{ borderRadius: "8px" }}>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Rank</TableCell>
+                      {marksData.map((mark, index) => (
+                        <TableCell key={index} align="right">{`Q${
+                          index + 1
+                        }`}</TableCell>
+                      ))}
+                      <TableCell align="right">Total Marks</TableCell>{" "}
+                      {/* Add this line */}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>{userRank}</TableCell>
+                      {marksData.map((mark, index) => (
+                        <TableCell key={index} align="right">
+                          {mark.marks}
+                        </TableCell>
+                      ))}
+                      <TableCell align="right">
+                        {marksData
+                          .reduce((total, mark) => total + mark.marks, 0)
+                          .toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              width: "95%",
+              marginTop: { xs: 20, sm: 20 },
+            }}
+          >
+            <Box
+              sx={{
+                width: "80%",
+                backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                borderRadius: "8px",
+                boxShadow: showCustomTheme
+                  ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                  : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                padding: "20px",
+              }}
+            ></Box>
+          </Box>
+
           <Box
             sx={{
               display: "flex",

@@ -1813,12 +1813,72 @@ app.get("/marks-stats/:uniqueCode", authenticateJwt, async (req, res) => {
         userMarks: userMark.marks || 0,
       };
     });
-    console.log({ marksWithQuestions });
     // Return the combined marks and questions data
     res.status(200).json(marksWithQuestions);
   } catch (error) {
     // Handle errors
     console.error("Error fetching marks stats:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Route to get marks of each question for a user in a quiz
+app.get("/:uniqueCode/user/marks", authenticateJwt, async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+    const userId = req.user.id;
+    // Fetch marks for the specified user and quiz
+    let marks = await MarksTrial.find({ uniqueCode, userId }).select(
+      "questionId marks"
+    );
+
+    // If marks are null, change them to 0
+    marks = marks.map((mark) => ({
+      questionId: mark.questionId,
+      marks: mark.marks !== null ? mark.marks : 0,
+    }));
+
+    res.json(marks);
+  } catch (error) {
+    console.error("Error fetching marks:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Route to fetch the rank of a user in a quiz
+app.get("/:uniqueCode/user/rank", authenticateJwt, async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+    const userId = req.user.id;
+
+    // Find all marks for the given uniqueCode
+    const marks = await MarksTrial.find({ uniqueCode });
+
+    // Create an object to store total marks for each user
+    const totalMarksMap = {};
+
+    // Calculate total marks for each user
+    marks.forEach((mark) => {
+      if (!totalMarksMap[mark.userId]) {
+        totalMarksMap[mark.userId] = 0;
+      }
+      totalMarksMap[mark.userId] += mark.marks;
+    });
+
+    // Calculate total marks of the current user for the specified quiz
+    const currentUserTotalMarks = totalMarksMap[userId] || 0;
+
+    // Count the number of users who scored higher than the current user
+    let rank = 1;
+    for (const id in totalMarksMap) {
+      if (totalMarksMap[id] > currentUserTotalMarks) {
+        rank++;
+      }
+    }
+    console.log({ rank });
+    res.json({ rank });
+  } catch (error) {
+    console.error("Error fetching rank:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

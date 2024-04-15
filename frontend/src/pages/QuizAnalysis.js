@@ -213,6 +213,7 @@ const QuizAnalysis = () => {
           throw new Error("Failed to fetch user data");
         }
         const data = await response.json();
+        console.log("this is the total marks", data);
         setUserData(data);
       } catch (error) {
         console.error("Error fetching user data:", error);
