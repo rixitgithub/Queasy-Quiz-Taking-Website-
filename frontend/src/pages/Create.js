@@ -17,7 +17,7 @@ import {
   CardContent,
   ThemeProvider,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme"; // Assuming you have the theme defined in a separate file
 import { alpha } from "@mui/material";
@@ -41,6 +41,7 @@ const CreateQuiz = () => {
   const [passingMarks, setPassingMarks] = useState(); // Passing marks
   const [questionMarks, setQuestionMarks] = useState(1); // Marks for each question
   const [assignEqualMarks, setAssignEqualMarks] = useState(false);
+  const { workspaceId } = useParams();
 
   const navigate = useNavigate();
 
@@ -132,8 +133,9 @@ const CreateQuiz = () => {
       const requestBody = {
         title,
         passingMarks,
-        autoAssignMarks: assignMarks, // Send the value of assignMarks directly
+        autoAssignMarks: assignMarks,
         questions,
+        workspaceId: workspaceId, // Include workspaceId in the request body
       };
 
       const response = await fetch("http://localhost:1234/quizzes", {
@@ -144,7 +146,7 @@ const CreateQuiz = () => {
         },
         body: JSON.stringify(requestBody),
       });
-      console.log("Body: ", requestBody.autoAssignMarks);
+
       if (!response.ok) {
         throw new Error("Failed to create quiz.");
       }

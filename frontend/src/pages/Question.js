@@ -11,8 +11,10 @@ import {
   TextField,
 } from "@mui/material";
 
+// Global variable to store the remaining attempts
+let exitPopupAttempts = 3;
+
 const Question = () => {
-  const [exitPopupAttempts, setExitPopupAttempts] = useState(2); // Remaining attempts for the exit popup
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [question, setQuestion] = useState(null);
@@ -31,6 +33,7 @@ const Question = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && exitPopupAttempts > 0) {
+        exitPopupAttempts--; // Decrement attempts when visibility is gone
         setShowExitPopup(true);
         console.log("Exit popup shown");
       }
@@ -41,7 +44,7 @@ const Question = () => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [exitPopupAttempts]);
+  }, []);
 
   const handleCloseExitPopup = () => {
     setShowExitPopup(false);
@@ -49,7 +52,6 @@ const Question = () => {
   };
 
   const handleContinue = () => {
-    setExitPopupAttempts(exitPopupAttempts - 1);
     handleCloseExitPopup();
   };
 

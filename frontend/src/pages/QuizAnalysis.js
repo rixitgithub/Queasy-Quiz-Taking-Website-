@@ -540,9 +540,112 @@ const QuizAnalysis = () => {
             }}
             style={{ width: "110%" }}
           >
-            <Typography variant="h4" sx={{ mb: 2 }}>
-              MARKS ANALYSIS - {quizTitle}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
+                marginBottom: { xs: 22, sm: 22 },
+              }}
+            >
+              <Typography
+                variant="h1"
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  alignSelf: "center",
+                  textAlign: "center",
+                  fontSize: "clamp(3.5rem, 10vw, 4rem)",
+                }}
+              >
+                Quiz Analysis - &nbsp;
+                <Typography
+                  component="span"
+                  variant="h1"
+                  sx={{
+                    fontSize: "clamp(3rem, 10vw, 4rem)",
+                    color: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "primary.main"
+                        : "primary.light",
+                  }}
+                >
+                  {quizTitle}
+                </Typography>
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "95%",
+                marginTop: { xs: 20, sm: 20 },
+                marginBottom: { xs: 22, sm: 22 },
+              }}
+            >
+              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+
+              <Box
+                sx={{
+                  width: "80%",
+                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                  borderRadius: "8px",
+                  boxShadow: showCustomTheme
+                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                  padding: "20px",
+                }}
+              >
+                <Paper elevation={3} sx={{ p: 2, borderRadius: "8px" }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Sno.</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Email</TableCell>
+                        {/* Display "Q1", "Q2", "Q3", and so on as column headers */}
+                        {Array.from(
+                          new Set(marksData.map((mark) => mark.questionId))
+                        ).map((questionId, index) => (
+                          <TableCell key={questionId}>{`Q${
+                            index + 1
+                          }`}</TableCell>
+                        ))}
+                        <TableCell>Total Score</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {/* Map over userData to display each user */}
+                      {userData.map((user, index) => (
+                        <TableRow key={user.email}>
+                          <TableCell>{index + 1}</TableCell> {/* Add sno */}
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          {/* Loop over unique question IDs to display marks for each question */}
+                          {Array.from(
+                            new Set(marksData.map((mark) => mark.questionId))
+                          ).map((questionId) => {
+                            const userMark = marksData.find(
+                              (mark) =>
+                                mark.questionId === questionId &&
+                                mark.username === user.username
+                            );
+                            return (
+                              <TableCell key={questionId}>
+                                {userMark ? userMark.marks : "-"}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell>{user.totalMarks}</TableCell>{" "}
+                          {/* Display total score */}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Box>
+            </Box>
             <TextField
               label="Enter Username"
               variant="outlined"
@@ -755,79 +858,6 @@ const QuizAnalysis = () => {
                     </Typography>
                   </Paper>
                 ))}
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-              }}
-            >
-              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
-
-              <Box
-                sx={{
-                  width: "80%",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
-                }}
-              >
-                <Typography variant="h5" sx={{ mt: 3, mb: 3 }}>
-                  User Scores
-                </Typography>
-                <Paper elevation={3} sx={{ p: 2, borderRadius: "8px" }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Sno.</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Email</TableCell>
-                        {/* Display "Q1", "Q2", "Q3", and so on as column headers */}
-                        {Array.from(
-                          new Set(marksData.map((mark) => mark.questionId))
-                        ).map((questionId, index) => (
-                          <TableCell key={questionId}>{`Q${
-                            index + 1
-                          }`}</TableCell>
-                        ))}
-                        <TableCell>Total Score</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {/* Map over userData to display each user */}
-                      {userData.map((user, index) => (
-                        <TableRow key={user.email}>
-                          <TableCell>{index + 1}</TableCell> {/* Add sno */}
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          {/* Loop over unique question IDs to display marks for each question */}
-                          {Array.from(
-                            new Set(marksData.map((mark) => mark.questionId))
-                          ).map((questionId) => {
-                            const userMark = marksData.find(
-                              (mark) =>
-                                mark.questionId === questionId &&
-                                mark.username === user.username
-                            );
-                            return (
-                              <TableCell key={questionId}>
-                                {userMark ? userMark.marks : "-"}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell>{user.totalMarks}</TableCell>{" "}
-                          {/* Display total score */}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Paper>
               </Box>
             </Box>
           </Container>

@@ -103,7 +103,9 @@ function AppAppBar({ mode, toggleColorMode }) {
                   px: 0,
                 }}
               >
-                <img src={Logo} style={logoStyle} alt="logo of queazy" />
+                <MenuItem onClick={() => navigate("/")}>
+                  <img src={Logo} style={logoStyle} alt="logo of queazy" />
+                </MenuItem>
                 <Box sx={{ display: { xs: "none", md: "flex" } }}>
                   <MenuItem
                     onClick={() => navigate("/dash")}

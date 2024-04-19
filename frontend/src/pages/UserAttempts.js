@@ -141,8 +141,30 @@ const QuizAttemptsPage = () => {
           }}
         ></Container>
         <Container>
-          <Typography variant="h2" align="center" gutterBottom>
-            Your Attempts
+          <Typography
+            variant="h1"
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              alignSelf: "center",
+              textAlign: "center",
+              fontSize: "clamp(3.5rem, 10vw, 4rem)",
+            }}
+          >
+            Your Past&nbsp;
+            <Typography
+              component="span"
+              variant="h1"
+              sx={{
+                fontSize: "clamp(3rem, 10vw, 4rem)",
+                color: (theme) =>
+                  theme.palette.mode === "light"
+                    ? "primary.main"
+                    : "primary.light",
+              }}
+            >
+              Attempts
+            </Typography>
           </Typography>
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", my: 8 }}>
@@ -167,12 +189,13 @@ const QuizAttemptsPage = () => {
                     width: "350px",
                     m: 2,
                     cursor: quiz.isChecked ? "pointer" : "default",
-                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.1)", // Updated box shadow
                     backgroundColor: quiz.isChecked
                       ? quiz.isLive
                         ? "inherit"
-                        : "lightgreen"
-                      : "inherit", // Modify the background color conditionally
+                        : "#e0f2f1"
+                      : "inherit", // Modified background color
+                    borderRadius: "16px", // Rounded corners
                     position: "relative",
                     transition: "transform 0.2s",
                     "&:hover": {
@@ -182,11 +205,23 @@ const QuizAttemptsPage = () => {
                   onClick={() => handleQuizClick(quiz)}
                 >
                   <CardContent>
-                    <Typography variant="h5" gutterBottom>
-                      Quiz Title: {quiz.title}
+                    <Typography
+                      variant="h5"
+                      gutterBottom
+                      sx={{ color: "#37474f" }}
+                    >
+                      {" "}
+                      {/* Styled typography */}
+                      {quiz.title}
                     </Typography>
-                    <Typography variant="body1" gutterBottom>
-                      Unique Code: {quiz.uniqueCode}
+                    <Typography
+                      variant="body1"
+                      gutterBottom
+                      sx={{ color: "#546e7a" }}
+                    >
+                      {" "}
+                      {/* Styled typography */}
+                      {quiz.uniqueCode}
                     </Typography>
                     <Box
                       sx={{
@@ -194,7 +229,7 @@ const QuizAttemptsPage = () => {
                         top: "10px",
                         right: "10px",
                         borderRadius: "10px",
-                        backgroundColor: quiz.isChecked ? "green" : "red",
+                        backgroundColor: quiz.isChecked ? "#4caf50" : "#f44336", // Updated color
                         color: "white",
                         padding: "4px 8px",
                       }}
@@ -210,6 +245,7 @@ const QuizAttemptsPage = () => {
                         position: "absolute",
                         bottom: "10px",
                         right: "10px",
+                        color: "#78909c", // Styled typography
                       }}
                     >
                       {`${Math.floor(

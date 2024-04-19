@@ -25,6 +25,8 @@ export default function UserAnalysis() {
   const [mode, setMode] = useState("light");
   const { uniqueCode, userId } = useParams();
   const [showCustomTheme, setShowCustomTheme] = useState(true);
+
+  const [quizTitle, setQuizTitle] = useState("");
   const [marksDistribution, setMarksDistribution] = useState({
     options: {
       chart: {
@@ -613,6 +615,25 @@ export default function UserAnalysis() {
       };
     });
 
+  useEffect(() => {
+    const fetchQuizTitle = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quiz/title/${uniqueCode}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch quiz title");
+        }
+        const data = await response.json();
+        setQuizTitle(data.title);
+      } catch (error) {
+        console.error("Error fetching quiz title:", error);
+      }
+    };
+
+    fetchQuizTitle();
+  }, [uniqueCode]);
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -640,6 +661,41 @@ export default function UserAnalysis() {
           }}
           style={{ width: "110%" }}
         >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              width: "95%",
+              marginTop: { xs: 20, sm: 20 },
+              marginBottom: { xs: 22, sm: 22 },
+            }}
+          >
+            <Typography
+              variant="h1"
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignSelf: "center",
+                textAlign: "center",
+                fontSize: "clamp(3.5rem, 10vw, 4rem)",
+              }}
+            >
+              User Analysis - &nbsp;
+              <Typography
+                component="span"
+                variant="h1"
+                sx={{
+                  fontSize: "clamp(3rem, 10vw, 4rem)",
+                  color: (theme) =>
+                    theme.palette.mode === "light"
+                      ? "primary.main"
+                      : "primary.light",
+                }}
+              >
+                {quizTitle}
+              </Typography>
+            </Typography>
+          </Box>
           <Box
             sx={{
               display: "flex",
@@ -923,10 +979,9 @@ export default function UserAnalysis() {
               />
             </Box>
           </Box>
-
-          <Divider />
-          <Footer />
         </Container>
+        <Divider />
+        <Footer />
       </Box>
     </ThemeProvider>
   );

@@ -82,6 +82,7 @@ const quizSchema = new mongoose.Schema({
   feedback: [{ type: String }], // Feedback array
   attempted: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   isChecked: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const answerSchema = new mongoose.Schema({
@@ -182,6 +183,19 @@ const markstrialSchema = new mongoose.Schema({
 const Marks = mongoose.model("Marks", marksSchema);
 const MarksTrial = mongoose.model("MarksTrial", markstrialSchema);
 
+const workspaceSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  quizzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Quiz" }],
+});
+
+// Create the Workspace model
+const Workspace = mongoose.model("Workspace", workspaceSchema);
+
 // Helper function to generate unique code
 function generateUniqueCode() {
   return shortid.generate();
@@ -264,14 +278,16 @@ app.post("/user/create/trial", async (req, res) => {
 
 app.post("/quizzes", authenticateJwt, async (req, res) => {
   try {
-    const { title, questions, autoAssignMarks, passingMarks } = req.body;
+    console.log("hihihiih");
+    const { title, questions, autoAssignMarks, passingMarks, workspaceId } =
+      req.body;
     const createdBy = req.user.id; // Extracting user ID from the decoded JWT token
-    console.log(autoAssignMarks);
+    console.log({ workspaceId });
     // Check if required fields are provided
-    if (!title || !questions || questions.length === 0) {
+    if (!title || !questions || questions.length === 0 || !workspaceId) {
       return res
         .status(400)
-        .json({ message: "Title and questions are required." });
+        .json({ message: "Title, questions, and workspaceId are required." });
     }
 
     // Validate questions to ensure all required fields are provided
@@ -304,6 +320,13 @@ app.post("/quizzes", authenticateJwt, async (req, res) => {
 
     // Save the new quiz to the database
     const savedQuiz = await newQuiz.save();
+
+    // Update the corresponding workspace document to include the newly created quiz ID
+    const workspace = await Workspace.findByIdAndUpdate(
+      workspaceId,
+      { $push: { quizzes: savedQuiz._id } },
+      { new: true }
+    );
 
     return res.status(201).json(savedQuiz);
   } catch (error) {
@@ -1912,6 +1935,119 @@ app.get("/quiz/:uniqueCode/comments", authenticateJwt, async (req, res) => {
   } catch (error) {
     console.error("Error fetching comments:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/workspaces", authenticateJwt, async (req, res) => {
+  try {
+    const createdBy = req.user.id; // Assuming user ID is available in req.user.id
+
+    // Find all workspaces of the user
+    const workspaces = await Workspace.find({ createdBy });
+
+    // Loop through each workspace and count the number of quizzes
+    const workspaceData = await Promise.all(
+      workspaces.map(async (workspace) => {
+        const workspaceId = workspace._id; // Get the workspace ID
+        const workspaceName = workspace.name;
+
+        // Count the number of quizzes for the current workspace
+        const quizCount = workspace.quizzes.length;
+
+        return { id: workspaceId, name: workspaceName, quizCount };
+      })
+    );
+
+    res.json({ workspaces: workspaceData });
+  } catch (error) {
+    console.error("Error fetching workspaces:", error.message);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.post("/workspaces", authenticateJwt, async (req, res) => {
+  const { name } = req.body;
+  const createdBy = req.user.id;
+
+  try {
+    // Create a new workspace object
+    const newWorkspace = new Workspace({
+      name,
+      createdBy, // Assuming userId is a valid ObjectId
+      quizzes: [], // Optionally, you can include quizzes if needed
+    });
+
+    // Save the new workspace to the database
+    await newWorkspace.save();
+
+    // Return the new workspace object as the response
+    res.status(201).json(newWorkspace);
+  } catch (error) {
+    console.error("Error creating workspace:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/quizzes", authenticateJwt, async (req, res) => {
+  try {
+    const workspaceId = req.query.workspaceId; // Get the workspace ID from the query parameter
+    const quizzes = await Quiz.find({ workspaceId }); // Find all quizzes with the specified workspaceId
+    res.json({ quizzes });
+  } catch (error) {
+    console.error("Error fetching quizzes:", error.message);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.get(
+  "/workspaces/:workspaceId/quizzes",
+  authenticateJwt,
+  async (req, res) => {
+    try {
+      const workspaceId = req.params.workspaceId;
+      console.log({ workspaceId });
+      // Find the workspace by ID
+      const workspace = await Workspace.findById(workspaceId);
+
+      if (!workspace) {
+        return res.status(404).json({ message: "Workspace not found" });
+      }
+
+      // Extract the quiz IDs associated with the workspace
+      const quizIds = workspace.quizzes;
+
+      // Fetch details of quizzes using the extracted IDs
+      const quizzes = await Quiz.find({ _id: { $in: quizIds } });
+      console.log({ quizzes });
+      res.status(200).json({ quizzes });
+    } catch (error) {
+      console.error("Error fetching quizzes:", error.message);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
+app.put("/:quizId/publish", async (req, res) => {
+  const { quizId } = req.params;
+
+  try {
+    // Find the quiz by ID
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    // Toggle the isLive property
+    quiz.isLive = !quiz.isLive;
+
+    // Save the updated quiz
+    await quiz.save();
+
+    res.json({ message: "Quiz updated successfully", quiz });
+  } catch (error) {
+    console.error("Error publishing/unpublishing quiz:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
