@@ -239,8 +239,24 @@ export default function SignIn() {
         }
       );
       if (response.ok) {
-        // Quiz published successfully
-        // Update the quizzes state or fetch quizzes again to reflect the changes
+        // Toggle the isLive property of the quiz
+        quiz.isLive = !quiz.isLive;
+
+        // Display appropriate alert message based on the isLive property
+        if (quiz.isLive) {
+          // Quiz is now published
+          setSnackbarMessage(
+            `${quiz.title} is now published. Users can attempt this quiz.`
+          );
+        } else {
+          // Quiz is paused
+          setSnackbarMessage(
+            `${quiz.title} is paused. Users cannot attempt this quiz anymore.`
+          );
+        }
+
+        // Show the snackbar alert
+        setSnackbarOpen(true);
       } else {
         console.error("Failed to publish quiz:", response.statusText);
       }
@@ -598,7 +614,10 @@ export default function SignIn() {
                               marginBottom: 0,
                             }}
                           >
-                            <Tooltip title="Publish" placement="top">
+                            <Tooltip
+                              title={quiz.isLive ? "Pause" : "Publish"}
+                              placement="top"
+                            >
                               <IconButton
                                 onClick={() => handlePublishQuiz(quiz)}
                               >

@@ -2027,9 +2027,9 @@ app.get(
   }
 );
 
-app.put("/:quizId/publish", async (req, res) => {
+app.put("/quizzes/:quizId/publish", async (req, res) => {
   const { quizId } = req.params;
-
+  console.log(quizId);
   try {
     // Find the quiz by ID
     const quiz = await Quiz.findById(quizId);
