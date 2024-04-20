@@ -288,6 +288,11 @@ export default function SignIn() {
     navigate(`/quiz/${quiz.uniqueCode}/update`);
   };
 
+  //check response
+  const handleCheckResultClick = (quiz) => {
+    navigate(`/results/${quiz.uniqueCode}`);
+  };
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -698,7 +703,9 @@ export default function SignIn() {
                             </Tooltip>
 
                             <Tooltip title="Check Responses" placement="top">
-                              <IconButton>
+                              <IconButton
+                                onClick={() => handleCheckResultClick(quiz)}
+                              >
                                 <CheckIcon
                                   sx={{
                                     fontSize: 15,
