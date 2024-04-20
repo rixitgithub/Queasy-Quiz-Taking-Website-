@@ -61,6 +61,8 @@ export default function SignIn() {
   const searchParams = new URLSearchParams(location.search);
   const workspaceId = searchParams.get("workspace");
   const [workspaces, setWorkspaces] = useState([]);
+  const [open, setOpen] = useState(false);
+
   const [openDialog, setOpenDialog] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [quizzes, setQuizzes] = useState([]);
@@ -296,6 +298,35 @@ export default function SignIn() {
   //analytics
   const handleAnalytics = (quiz) => {
     navigate(`/quiz/${quiz.uniqueCode}/analysis`);
+  };
+
+  //delete
+  const handleDeleteQuiz = async (quiz) => {
+    try {
+      const response = await fetch(
+        `http://localhost:1234/quiz/${quiz.uniqueCode}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (response.ok) {
+        // Handle successful deletion
+        console.log("Quiz deleted successfully");
+        setSnackbarMessage("This quiz has been deleted");
+        setSnackbarOpen(true);
+        // Reload the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 500); // Adjust the delay as needed
+      } else {
+        console.error("Failed to delete quiz");
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error.message);
+    }
   };
 
   return (
@@ -736,7 +767,9 @@ export default function SignIn() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete" placement="top">
-                              <IconButton>
+                              <IconButton
+                                onClick={() => handleDeleteQuiz(quiz)}
+                              >
                                 <DeleteIcon
                                   sx={{
                                     fontSize: 15,

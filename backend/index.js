@@ -415,14 +415,17 @@ app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
 });
 
 // Delete quiz route
-app.delete("/quiz/:quizId", authenticateJwt, async (req, res) => {
+app.delete("/quiz/:uniqueCode", async (req, res) => {
   try {
-    const { quizId } = req.params;
-    await Quiz.findByIdAndDelete(quizId);
-    res.json({ message: "Quiz deleted successfully" });
+    const uniqueCode = req.params.uniqueCode;
+    await Quiz.deleteOne({ uniqueCode });
+
+    // Respond with success status
+    res.status(204).send();
   } catch (error) {
     console.error("Error deleting quiz:", error.message);
-    res.status(500).json({ message: "Error deleting quiz" });
+    // Respond with error status
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
