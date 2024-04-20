@@ -20,6 +20,7 @@ import {
   Grid,
   CardHeader,
   Tooltip,
+  Alert,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -228,6 +229,7 @@ export default function SignIn() {
 
   const handlePublishQuiz = async (quiz) => {
     try {
+      console.log("first quiz", quiz);
       const response = await fetch(
         `http://localhost:1234/quizzes/${quiz._id}/publish`,
         {
@@ -263,6 +265,22 @@ export default function SignIn() {
     } catch (error) {
       console.error("Error publishing quiz:", error.message);
     }
+  };
+
+  //share
+
+  const handleShareButtonClick = (quiz) => {
+    // Copy link to clipboard
+    const quizLink = `${window.location.origin}/quiz/${quiz.uniqueCode}/start`;
+    navigator.clipboard.writeText(quizLink);
+
+    // Show snackbar message
+    setSnackbarMessage("Link copied to clipboard: " + quizLink);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarShareClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -646,7 +664,9 @@ export default function SignIn() {
                             </Tooltip>
 
                             <Tooltip title="Share" placement="top">
-                              <IconButton>
+                              <IconButton
+                                onClick={() => handleShareButtonClick(quiz)}
+                              >
                                 <ShareIcon
                                   sx={{
                                     fontSize: 15,
@@ -781,23 +801,6 @@ export default function SignIn() {
             </Grid>
           </Box>
 
-          <Snackbar
-            anchorOrigin={{ vertical: "top", horizontal: "right" }}
-            open={snackbarOpen}
-            autoHideDuration={3000} // Adjust duration as needed
-            onClose={() => setSnackbarOpen(false)}
-            sx={{ backgroundColor: "#C8E6C9" }} // Light green background color
-          >
-            <MuiAlert
-              onClose={() => setSnackbarOpen(false)}
-              severity="success"
-              elevation={6}
-              variant="filled"
-            >
-              {snackbarMessage}
-            </MuiAlert>
-          </Snackbar>
-
           {/* Dialog for creating new workspace */}
           <Dialog
             open={openDialog}
@@ -832,6 +835,21 @@ export default function SignIn() {
               </Button>
             </DialogActions>
           </Dialog>
+
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000} // Adjust duration as needed
+            onClose={handleSnackbarShareClose}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert
+              onClose={handleSnackbarShareClose}
+              severity="success"
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </Container>
       </Box>
     </ThemeProvider>

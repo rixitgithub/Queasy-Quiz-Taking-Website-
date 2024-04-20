@@ -2029,7 +2029,6 @@ app.get(
 
 app.put("/quizzes/:quizId/publish", async (req, res) => {
   const { quizId } = req.params;
-  console.log(quizId);
   try {
     // Find the quiz by ID
     const quiz = await Quiz.findById(quizId);
