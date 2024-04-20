@@ -32,7 +32,7 @@ function App() {
           <Route path="/dash" element={<Dashboard />} />
           <Route path="/:workspaceId/create" element={<Create />} />
           <Route path="/quiz/:quizId" element={<Details />} />
-          <Route path="/quiz/:quizId/update" element={<Update />} />
+          <Route path="/quiz/:uniqueCode/update" element={<Update />} />
           <Route path="/quiz/:quizId/start" element={<TakeQuiz />} />
           <Route path="/quiz/:quizId/questions" element={<Quiz />} />
           <Route

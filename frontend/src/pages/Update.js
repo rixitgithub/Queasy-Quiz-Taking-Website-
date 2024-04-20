@@ -18,7 +18,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const UpdateQuiz = () => {
-  const { quizId } = useParams();
+  const { uniqueCode } = useParams();
   const [quiz, setQuiz] = useState(null);
   const [title, setTitle] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -26,12 +26,16 @@ const UpdateQuiz = () => {
   useEffect(() => {
     const fetchQuizDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:1234/quiz/${quizId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        console.log("uniqueCode", uniqueCode);
+        const response = await fetch(
+          `http://localhost:1234/quiz/${uniqueCode}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         const data = await response.json();
         setQuiz(data);
         setTitle(data.title);
@@ -42,7 +46,7 @@ const UpdateQuiz = () => {
     };
 
     fetchQuizDetails();
-  }, [quizId]);
+  }, [uniqueCode]);
 
   const handleTitleChange = (event) => {
     setTitle(event.target.value);
@@ -84,7 +88,7 @@ const UpdateQuiz = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`http://localhost:1234/quiz/${quizId}`, {
+      const response = await fetch(`http://localhost:1234/quiz/${uniqueCode}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +97,7 @@ const UpdateQuiz = () => {
         body: JSON.stringify({ title, questions }),
       });
       if (response.ok) {
-        window.location.href = `/quiz/${quizId}`;
+        window.location.href = `/quiz/${uniqueCode}`;
       } else {
         console.error("Failed to update quiz");
       }

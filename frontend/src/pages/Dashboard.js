@@ -283,6 +283,11 @@ export default function SignIn() {
     setSnackbarOpen(false);
   };
 
+  //edit
+  const handleEditClick = (quiz) => {
+    navigate(`/quiz/${quiz.uniqueCode}/update`);
+  };
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -679,7 +684,7 @@ export default function SignIn() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Edit" placement="top">
-                              <IconButton>
+                              <IconButton onClick={() => handleEditClick(quiz)}>
                                 <EditIcon
                                   sx={{
                                     fontSize: 15,
@@ -691,6 +696,7 @@ export default function SignIn() {
                                 />
                               </IconButton>
                             </Tooltip>
+
                             <Tooltip title="Check Responses" placement="top">
                               <IconButton>
                                 <CheckIcon

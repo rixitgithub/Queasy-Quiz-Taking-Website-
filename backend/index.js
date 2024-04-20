@@ -378,12 +378,11 @@ app.get("/user/quizzes", authenticateJwt, async (req, res) => {
 });
 
 // Fetch quiz by ID route
-app.get("/quiz/:quizId", authenticateJwt, async (req, res) => {
+app.get("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
   try {
-    console.log("no");
-    const quizId = req.params.quizId;
-    console.log(quizId);
-    const quiz = await Quiz.findById(quizId);
+    const uniqueCode = req.params.uniqueCode;
+    const quiz = await Quiz.findOne({ uniqueCode: uniqueCode });
+
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
@@ -395,18 +394,19 @@ app.get("/quiz/:quizId", authenticateJwt, async (req, res) => {
 });
 
 // Update quiz route
-app.put("/quiz/:quizId", authenticateJwt, async (req, res) => {
+app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
   try {
-    const quizId = req.params.quizId;
+    const uniqueCode = req.params.uniqueCode;
     const { title, questions } = req.body;
-    const updatedQuiz = await Quiz.findByIdAndUpdate(
-      quizId,
-      { title, questions },
+    const updatedQuiz = await Quiz.findOneAndUpdate(
+      { uniqueCode: uniqueCode },
+      { title: title, questions: questions },
       { new: true }
     ).populate("questions");
     if (!updatedQuiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
+    console.log("updated", updatedQuiz);
     res.status(200).json(updatedQuiz);
   } catch (error) {
     console.error("Error updating quiz:", error.message);
