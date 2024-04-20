@@ -293,6 +293,11 @@ export default function SignIn() {
     navigate(`/results/${quiz.uniqueCode}`);
   };
 
+  //analytics
+  const handleAnalytics = (quiz) => {
+    navigate(`/quiz/${quiz.uniqueCode}/analysis`);
+  };
+
   return (
     <ThemeProvider theme={createTheme(getLPTheme("light"))}>
       <Box
@@ -718,7 +723,7 @@ export default function SignIn() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Analytics" placement="top">
-                              <IconButton>
+                              <IconButton onClick={() => handleAnalytics(quiz)}>
                                 <BarChartIcon
                                   sx={{
                                     fontSize: 15,
