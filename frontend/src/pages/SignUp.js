@@ -6,6 +6,7 @@ import {
   TextField,
   Divider,
   IconButton,
+  Grid,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -27,9 +28,11 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isCreator, setIsCreator] = useState(null); // Track the selected option
 
   const handleSignUp = () => {
-    if (!fname || !lname || !email || !password) {
+    console.log("isCreator", isCreator);
+    if (!fname || !lname || !email || !password || isCreator === null) {
       setError("All fields are required");
       return;
     }
@@ -45,6 +48,7 @@ export default function SignUp() {
       lname: lname,
       email: email,
       password: password,
+      isCreator: isCreator, // Include the selected option in the request
     };
 
     fetch("http://localhost:1234/users/signup", {
@@ -106,13 +110,19 @@ export default function SignUp() {
             sx={{
               mt: { xs: 1, sm: 3 },
               alignSelf: "center",
-              width: "50%",
+              width: { xs: "90%", sm: "50%" }, // Adjust width for smaller screens
               border: "1px solid #ccc",
               borderRadius: "8px",
               padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center", // Center align child elements
             }}
           >
-            <Typography variant="h4" sx={{ mb: 2 }}>
+            <Typography
+              variant="h4"
+              sx={{ mb: 2, fontSize: { xs: "1.5rem", sm: "2rem" } }}
+            >
               REGISTER NOW
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -125,7 +135,11 @@ export default function SignUp() {
                 fullWidth
                 value={fname}
                 onChange={(e) => setFname(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 1, // Adjusted margin-bottom
+                  minWidth: 0,
+                  "@media (max-width: 400px)": { minWidth: 0 },
+                }}
               />
               <TextField
                 id="lname"
@@ -135,7 +149,11 @@ export default function SignUp() {
                 fullWidth
                 value={lname}
                 onChange={(e) => setLname(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 1, // Adjusted margin-bottom
+                  minWidth: 0,
+                  "@media (max-width: 400px)": { minWidth: 0 },
+                }}
               />
               <TextField
                 id="email"
@@ -145,8 +163,13 @@ export default function SignUp() {
                 fullWidth
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 1, // Adjusted margin-bottom
+                  minWidth: 0,
+                  "@media (max-width: 400px)": { minWidth: 0 },
+                }}
               />
+
               <TextField
                 id="password"
                 label="Password"
@@ -156,7 +179,11 @@ export default function SignUp() {
                 fullWidth
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 1, // Adjusted margin-bottom
+                  minWidth: 0,
+                  "@media (max-width: 400px)": { minWidth: 0 },
+                }}
                 InputProps={{
                   endAdornment: (
                     <IconButton
@@ -169,7 +196,32 @@ export default function SignUp() {
                   ),
                 }}
               />
+              <Grid
+                container
+                direction="column"
+                alignItems="center"
+                spacing={2}
+                sx={{ mt: 2 }}
+              >
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setIsCreator(true)} // Set isCreator to true when clicked
+                  sx={{ mb: 2 }} // Adjusted margin-bottom
+                >
+                  You'll Create Quizzes using Queazy
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setIsCreator(false)} // Set isCreator to false when clicked
+                  sx={{ mb: 2 }} // Adjusted margin-bottom
+                >
+                  You'll Take Quizzes using Queazy
+                </Button>
+              </Grid>
             </Container>
+
             {error && (
               <Typography variant="body2" color="error" sx={{ mb: 2 }}>
                 {error}

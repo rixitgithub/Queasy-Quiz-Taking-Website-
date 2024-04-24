@@ -13,13 +13,16 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  CircularProgress,
+  TableContainer,
 } from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 
-import { alpha } from "@mui/material";
+import { useMediaQuery, alpha } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Footer from "../components/Footer";
 
 const QuizAnalysis = () => {
@@ -32,6 +35,47 @@ const QuizAnalysis = () => {
   const [filteredMarksData, setFilteredMarksData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [quizTitle, setQuizTitle] = useState("");
+  const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+  const [owner, setOwner] = useState(null);
+
+  useEffect(() => {
+    const fetchOwner = async () => {
+      try {
+        const token = localStorage.getItem("token"); // Assuming the token is stored in localStorage
+        if (!token) {
+          throw new Error("Token not found");
+        }
+
+        const response = await fetch(
+          `http://localhost:1234/user/${uniqueCode}/owner`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const data = await response.json();
+        console.log("Data:", data);
+        setOwner(data.isOwner);
+        // Update state or perform any other actions with the fetched data
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        // Handle error
+      }
+    };
+
+    fetchOwner();
+  }, [uniqueCode]); // Add params.uniqueCode to the dependency array to trigger the effect when it changes
+
   const [chartData, setChartData] = useState({
     options: {
       chart: {
@@ -452,6 +496,7 @@ const QuizAnalysis = () => {
         };
 
         setAdditionalChartData(additionalChartData);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -512,360 +557,416 @@ const QuizAnalysis = () => {
     fetchQuizTitle();
   }, [uniqueCode]);
 
-  return (
-    <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
+  if (loading) {
+    return (
       <Box
-        id="hero"
-        sx={(theme) => ({
-          width: "100%",
-          backgroundImage:
-            theme.palette.mode === "light"
-              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
-              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
-          backgroundSize: "100% 20%",
-          backgroundRepeat: "no-repeat",
-        })}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
       >
-        <CssBaseline />
-        <AppAppBar toggleColorMode={toggleColorMode} />
-        <Box sx={{ flexGrow: 1 }}>
-          <Container
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              pt: { xs: 5, sm: 12 },
-              pb: { xs: 8, sm: 12 },
-            }}
-            style={{ width: "110%" }}
-          >
-            <Box
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return owner !== null ? (
+    owner ? (
+      <ThemeProvider theme={createTheme(getLPTheme("light"))}>
+        <Box
+          id="hero"
+          sx={(theme) => ({
+            width: "100%",
+            backgroundImage:
+              theme.palette.mode === "light"
+                ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+                : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+            backgroundSize: "100% 20%",
+            backgroundRepeat: "no-repeat",
+          })}
+        >
+          <CssBaseline />
+          <AppAppBar toggleColorMode={toggleColorMode} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Container
               sx={{
                 display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-                marginBottom: { xs: 22, sm: 22 },
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                pt: { xs: 5, sm: 12 },
+                pb: { xs: 8, sm: 12 },
               }}
+              style={{ width: "100%" }}
             >
-              <Typography
-                variant="h1"
+              <Box
                 sx={{
                   display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  alignSelf: "center",
-                  textAlign: "center",
-                  fontSize: "clamp(3.5rem, 10vw, 4rem)",
+                  justifyContent: "center",
+                  width: "95%",
+                  marginTop: { xs: 20, sm: 20 },
+                  marginBottom: { xs: 22, sm: 22 },
                 }}
               >
-                Quiz Analysis - &nbsp;
                 <Typography
-                  component="span"
                   variant="h1"
                   sx={{
-                    fontSize: "clamp(3rem, 10vw, 4rem)",
-                    color: (theme) =>
-                      theme.palette.mode === "light"
-                        ? "primary.main"
-                        : "primary.light",
+                    display: "flex",
+                    flexDirection: { xs: "column", md: "row" },
+                    alignSelf: "center",
+                    textAlign: "center",
+                    fontSize: "clamp(3.5rem, 10vw, 4rem)",
                   }}
                 >
-                  {quizTitle}
+                  Quiz Analysis - &nbsp;
+                  <Typography
+                    component="span"
+                    variant="h1"
+                    sx={{
+                      fontSize: "clamp(3rem, 10vw, 4rem)",
+                      color: (theme) =>
+                        theme.palette.mode === "light"
+                          ? "primary.main"
+                          : "primary.light",
+                    }}
+                  >
+                    {quizTitle}
+                  </Typography>
                 </Typography>
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-                marginBottom: { xs: 22, sm: 22 },
-              }}
-            >
-              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
-
+              </Box>
               <Box
                 sx={{
-                  width: "80%",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "95%",
+                  marginTop: { xs: 20, sm: 20 },
+                  marginBottom: { xs: 22, sm: 22 },
                 }}
               >
-                <Paper elevation={3} sx={{ p: 2, borderRadius: "8px" }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Sno.</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Email</TableCell>
-                        {/* Display "Q1", "Q2", "Q3", and so on as column headers */}
-                        {Array.from(
-                          new Set(marksData.map((mark) => mark.questionId))
-                        ).map((questionId, index) => (
-                          <TableCell key={questionId}>{`Q${
-                            index + 1
-                          }`}</TableCell>
-                        ))}
-                        <TableCell>Total Score</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {/* Map over userData to display each user */}
-                      {userData.map((user, index) => (
-                        <TableRow key={user.email}>
-                          <TableCell>{index + 1}</TableCell> {/* Add sno */}
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          {/* Loop over unique question IDs to display marks for each question */}
+                {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+
+                <Box
+                  sx={{
+                    width: "80%",
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
+                  }}
+                >
+                  <TableContainer
+                    component={Paper}
+                    sx={{ borderRadius: "8px" }}
+                  >
+                    <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Sno.</TableCell>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Email</TableCell>
+                          {/* Display "Q1", "Q2", "Q3", and so on as column headers */}
                           {Array.from(
                             new Set(marksData.map((mark) => mark.questionId))
-                          ).map((questionId) => {
-                            const userMark = marksData.find(
-                              (mark) =>
-                                mark.questionId === questionId &&
-                                mark.username === user.username
-                            );
-                            return (
-                              <TableCell key={questionId}>
-                                {userMark ? userMark.marks : "-"}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell>{user.totalMarks}</TableCell>{" "}
-                          {/* Display total score */}
+                          ).map((questionId, index) => (
+                            <TableCell key={questionId}>{`Q${
+                              index + 1
+                            }`}</TableCell>
+                          ))}
+                          <TableCell>Total Score</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Paper>
+                      </TableHead>
+                      <TableBody>
+                        {/* Map over userData to display each user */}
+                        {userData.map((user, index) => (
+                          <TableRow key={user.email}>
+                            <TableCell>{index + 1}</TableCell> {/* Add sno */}
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            {/* Loop over unique question IDs to display marks for each question */}
+                            {Array.from(
+                              new Set(marksData.map((mark) => mark.questionId))
+                            ).map((questionId) => {
+                              const userMark = marksData.find(
+                                (mark) =>
+                                  mark.questionId === questionId &&
+                                  mark.username === user.username
+                              );
+                              return (
+                                <TableCell key={questionId}>
+                                  {userMark ? userMark.marks : "-"}
+                                </TableCell>
+                              );
+                            })}
+                            <TableCell>{user.totalMarks}</TableCell>{" "}
+                            {/* Display total score */}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
               </Box>
-            </Box>
-            <TextField
-              label="Enter Username"
-              variant="outlined"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              sx={{ mb: 0, width: "50%" }}
-            />
-            {filteredUsernames.length === 0 && (
-              <Typography variant="subtitle1">No user found</Typography>
-            )}
-            <Box
-              id="image"
-              sx={{
-                mt: { xs: 4, sm: 1 },
-                alignSelf: "center",
-                width: "80%",
-                margin: "auto",
-              }}
-            >
-              {/* Total Marks Chart */}
-              <Chart
-                options={filteredChartData.options}
-                series={filteredChartData.series}
-                type="bar"
-                width="100%"
-              />
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-              }}
-            >
-              {/* Average Score Chart */}
               <Box
                 sx={{
-                  width: "50%",
-                  marginRight: "10px",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: isSmallScreen ? "left" : "center", // Center items horizontally
                 }}
               >
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    color: mode === "light" ? "#000000" : "#FFFFFF",
-                  }}
-                >
-                  Average Score Obtained / Question
-                </Typography>
+                <TextField
+                  label="Enter Username"
+                  variant="outlined"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  sx={{ mb: 0, width: "30%" }}
+                />
+                {filteredUsernames.length === 0 && (
+                  <Typography variant="subtitle1">No user found</Typography>
+                )}
+              </Box>
+
+              <Box
+                id="image"
+                sx={{
+                  mt: { xs: 4, sm: 1 },
+                  alignSelf: "center",
+                  width: "80%",
+                  margin: "auto",
+                }}
+              >
+                {/* Total Marks Chart */}
                 <Chart
-                  options={averageScoreChartData.options}
-                  series={averageScoreChartData.series}
+                  options={filteredChartData.options}
+                  series={filteredChartData.series}
                   type="bar"
                   width="100%"
                 />
               </Box>
 
-              {/* Time Spent Chart */}
               <Box
                 sx={{
-                  width: "50%",
-                  marginLeft: "10px",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "95%",
+                  marginTop: { xs: 20, sm: 20 },
+                  flexDirection: { xs: "column", sm: "row" }, // Stack cards vertically on small screens
                 }}
               >
-                <Typography
-                  variant="h5"
+                {/* Average Score Chart */}
+                <Box
                   sx={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                    width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
+                    marginLeft: { xs: 0, sm: 10 }, // Add margin left only on larger screens to separate cards
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
+                    maxHeight: "450px",
+                    overflowY: "auto",
+                    flexDirection: { xs: "column", sm: "row" }, // Stack items vertically on small screens
                   }}
                 >
-                  Average Time Spent / Question
-                </Typography>
-                <Chart
-                  options={timeSpentChartData.options}
-                  series={timeSpentChartData.series}
-                  type="area"
-                  width="100%"
-                />
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-              }}
-            >
-              {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "10px",
+                      color: mode === "light" ? "#000000" : "#FFFFFF",
+                    }}
+                  >
+                    Average Score Obtained / Question
+                  </Typography>
+                  <Chart
+                    options={averageScoreChartData.options}
+                    series={averageScoreChartData.series}
+                    type="bar"
+                    width="100%"
+                  />
+                </Box>
 
-              <Box
-                sx={{
-                  width: "80%",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
-                }}
-              >
-                <Typography
-                  variant="h5"
+                {/* Time Spent Chart */}
+                <Box
                   sx={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                    width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
+                    marginLeft: isSmallScreen ? 0 : "10px",
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
+                    maxHeight: "450px",
+                    overflowY: "auto",
+                    marginTop: isSmallScreen ? "3rem" : 0,
                   }}
                 >
-                  Marks Analysis per Question
-                </Typography>
-                {/* Additional Chart */}
-                <Chart
-                  options={additionalChartData.options}
-                  series={additionalChartData.series}
-                  type="line"
-                  width="100%"
-                />
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "10px",
+                      color: mode === "light" ? "#000000" : "#FFFFFF",
+                    }}
+                  >
+                    Average Time Spent / Question
+                  </Typography>
+                  <Chart
+                    options={timeSpentChartData.options}
+                    series={timeSpentChartData.series}
+                    type="area"
+                    width="100%"
+                  />
+                </Box>
               </Box>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                width: "95%",
-                marginTop: { xs: 20, sm: 20 },
-              }}
-            >
-              {/* Average Score Chart */}
               <Box
                 sx={{
-                  width: "50%",
-                  marginRight: "10px",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "95%",
+                  marginTop: { xs: 20, sm: 20 },
                 }}
               >
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    color: mode === "light" ? "#000000" : "#FFFFFF",
-                  }}
-                >
-                  Marks Distribution
-                </Typography>
-                <Chart
-                  options={marksDistribution.options}
-                  series={marksDistribution.series}
-                  type="donut"
-                  width="100%"
-                />
-              </Box>
+                {/* Additional Chart - Highest, Lowest, Average, Median Marks per Question */}
 
-              {/* Time Spent Chart */}
-              <Box
-                sx={{
-                  width: "50%",
-                  marginLeft: "10px",
-                  backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
-                  borderRadius: "8px",
-                  boxShadow: showCustomTheme
-                    ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
-                    : "0px 2px 4px rgba(255, 255, 255, 0.1)",
-                  padding: "20px",
-                  maxHeight: "450px", // Set a maximum height for the container
-                  overflowY: "auto", // Enable vertical scrolling when content exceeds the container height
-                }}
-              >
-                <Typography
-                  variant="h5"
+                <Box
                   sx={{
-                    fontWeight: "bold",
-                    marginBottom: "10px",
-                    color: mode === "light" ? "#000000" : "#FFFFFF",
+                    width: "100%",
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
                   }}
                 >
-                  Quiz Feedback
-                </Typography>
-                {feedbacks.map((feedback, index) => (
-                  <Paper key={index} elevation={3} sx={{ p: 2, mt: 2 }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: mode === "light" ? "#000000" : "#FFFFFF" }}
-                    >
-                      {feedback}
-                    </Typography>
-                  </Paper>
-                ))}
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "10px",
+                      color: mode === "light" ? "#000000" : "#FFFFFF",
+                    }}
+                  >
+                    Marks Analysis per Question
+                  </Typography>
+                  {/* Additional Chart */}
+                  <Chart
+                    options={additionalChartData.options}
+                    series={additionalChartData.series}
+                    type="line"
+                    width="100%"
+                  />
+                </Box>
               </Box>
-            </Box>
-          </Container>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  width: "95%",
+                  marginTop: isSmallScreen ? 10 : { xs: 20, sm: 20 },
+                  flexDirection: { xs: "column", sm: "row" }, // Stack cards vertically on small screens
+                }}
+              >
+                {/* Average Score Chart */}
+                <Box
+                  sx={{
+                    width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
+                    marginRight: "10px",
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "10px",
+                      color: mode === "light" ? "#000000" : "#FFFFFF",
+                    }}
+                  >
+                    Marks Distribution
+                  </Typography>
+                  <Chart
+                    options={marksDistribution.options}
+                    series={marksDistribution.series}
+                    type="donut"
+                    width="100%"
+                  />
+                </Box>
+
+                {/* Time Spent Chart */}
+                <Box
+                  sx={{
+                    width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
+                    marginLeft: isSmallScreen ? 0 : "10px",
+                    backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
+                    borderRadius: "8px",
+                    boxShadow: showCustomTheme
+                      ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
+                      : "0px 2px 4px rgba(255, 255, 255, 0.1)",
+                    padding: "20px",
+                    maxHeight: "450px", // Set a maximum height for the container
+                    overflowY: "auto", // Enable vertical scrolling when content exceeds the container height
+                    marginTop: isSmallScreen ? "3rem" : 0,
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: "bold",
+                      marginBottom: "10px",
+                      color: mode === "light" ? "#000000" : "#FFFFFF",
+                    }}
+                  >
+                    Quiz Feedback
+                  </Typography>
+                  {feedbacks.map((feedback, index) => (
+                    <Paper key={index} elevation={3} sx={{ p: 2, mt: 2 }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ color: mode === "light" ? "#000000" : "#FFFFFF" }}
+                      >
+                        {feedback}
+                      </Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              </Box>
+            </Container>
+          </Box>
+          <Divider />
+          <Footer />
         </Box>
-        <Divider />
-        <Footer />
-      </Box>
-    </ThemeProvider>
+      </ThemeProvider>
+    ) : (
+      <>
+        <h2 style={{ textAlign: "center", color: "#333" }}>
+          Only the Owner of the quiz can access quiz analysis
+        </h2>
+      </>
+    )
+  ) : (
+    // You can render a loading indicator while the data is being fetched
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <CircularProgress />
+    </Box>
   );
 };
 

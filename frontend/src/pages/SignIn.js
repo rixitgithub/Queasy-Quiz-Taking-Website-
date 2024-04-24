@@ -15,7 +15,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-
 import { alpha } from "@mui/material";
 
 export default function SignIn() {
@@ -97,26 +96,35 @@ export default function SignIn() {
             sx={{
               mt: { xs: 1, sm: 3 },
               alignSelf: "center",
-              width: "50%",
+              width: { xs: "90%", sm: "50%" }, // Adjust width for smaller screens
               border: "1px solid #ccc",
               borderRadius: "8px",
               padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center", // Center align child elements
             }}
           >
             <Typography variant="h4" sx={{ mb: 2 }}>
               SIGN IN
             </Typography>
-
             <Divider sx={{ mb: 2 }} />
-            <Container sx={{ mb: 2 }}>
+            <Container sx={{ mb: 2, width: "100%" }}>
               <TextField
                 id="email"
                 label="Email Address"
                 size="small"
-                fullWidth
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  width: "100%", // Set width to 100% of parent container
+                  maxWidth: "100%", // Ensure text field doesn't exceed parent width
+                  minWidth: 0, // Reset the default min-width
+                  "@media (max-width: 400px)": {
+                    minWidth: 5,
+                  },
+                }}
               />
               <TextField
                 id="password"
@@ -124,10 +132,17 @@ export default function SignIn() {
                 type={showPassword ? "text" : "password"}
                 variant="outlined"
                 size="small"
-                fullWidth
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  width: "100%", // Set width to 100% of parent container
+                  maxWidth: "100%", // Ensure text field doesn't exceed parent width
+                  minWidth: 0, // Reset the default min-width
+                  "@media (max-width: 400px)": {
+                    minWidth: 5,
+                  },
+                }}
                 InputProps={{
                   endAdornment: (
                     <IconButton

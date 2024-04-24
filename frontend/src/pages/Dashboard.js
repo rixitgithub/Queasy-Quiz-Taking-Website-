@@ -21,6 +21,7 @@ import {
   CardHeader,
   Tooltip,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -45,6 +46,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ShareIcon from "@mui/icons-material/Share";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
+import UserAttempts from "./UserAttempts";
 
 export default function SignIn() {
   const [mode, setMode] = useState("light");
@@ -62,7 +64,7 @@ export default function SignIn() {
   const workspaceId = searchParams.get("workspace");
   const [workspaces, setWorkspaces] = useState([]);
   const [open, setOpen] = useState(false);
-
+  const [creator, setCreator] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [quizzes, setQuizzes] = useState([]);
@@ -76,6 +78,37 @@ export default function SignIn() {
     setSnackbarOpen(true);
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token"); // Assuming the token is stored in localStorage
+        if (!token) {
+          throw new Error("Token not found");
+        }
+
+        const response = await fetch("http://localhost:1234/users/isCreator", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const data = await response.json();
+        console.log("Data:", data);
+        setCreator(data.isCreator);
+        // Update state or perform any other actions with the fetched data
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        // Handle error
+      }
+    };
+
+    fetchData();
+  }, []);
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -303,8 +336,18 @@ export default function SignIn() {
   //delete
   const handleDeleteQuiz = async (quiz) => {
     try {
+      // Parse the query parameters from the URL
+      const queryParams = new URLSearchParams(window.location.search);
+      const workspace = queryParams.get("workspace");
+
+      // Check if the workspaceId is valid
+      if (!workspaceId) {
+        console.error("Workspace ID not found in query parameters");
+        return;
+      }
+
       const response = await fetch(
-        `http://localhost:1234/quiz/${quiz.uniqueCode}`,
+        `http://localhost:1234/quiz/${quiz.uniqueCode}?workspace=${workspace}`,
         {
           method: "DELETE",
           headers: {
@@ -329,580 +372,683 @@ export default function SignIn() {
     }
   };
 
-  return (
-    <ThemeProvider theme={createTheme(getLPTheme("light"))}>
-      <Box
-        id="hero"
-        sx={(theme) => ({
-          width: "100%",
-          backgroundImage:
-            theme.palette.mode === "light"
-              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
-              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
-          backgroundSize: "100% 20%",
-          backgroundRepeat: "no-repeat",
-        })}
-      >
-        <CssBaseline />
-        <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
-        <Container
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            pt: { xs: 5, sm: 12 },
-            pb: { xs: 8, sm: 12 },
-            transition: "opacity 1s", // Add transition for opacity
-            opacity: headerLoaded ? 1 : 0, // Set opacity based on headerLoaded state
-          }}
-          style={{ width: "110%" }}
+  return creator !== null ? (
+    creator ? (
+      <ThemeProvider theme={createTheme(getLPTheme("light"))}>
+        <Box
+          id="hero"
+          sx={(theme) => ({
+            width: "100%",
+            backgroundImage:
+              theme.palette.mode === "light"
+                ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+                : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+            backgroundSize: "100% 20%",
+            backgroundRepeat: "no-repeat",
+          })}
         >
-          {workspaces.length === 0 && (
-            <Box>
-              <img
-                src={arrowImage}
-                alt="Arrow"
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  position: "absolute",
-                  top: "50%",
-                  left: "25%",
-                  transform: "translate(-50%, -50%) rotate(180deg)",
-                }}
-              />
-              <Typography
-                variant="body1"
-                sx={{
-                  position: "absolute",
-                  top: "52%",
-                  left: "calc(25% + 30px)",
-                  transform: "translateY(-50%)",
-                  color: "black",
-                }}
-              >
-                You don't have any workspace.
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  position: "absolute",
-                  top: "55%",
-                  left: "calc(25% + 30px)",
-                  transform: "translateY(-50%)",
-                  color: "black",
-                }}
-              >
-                Create one here
-              </Typography>
-            </Box>
-          )}
-
-          {/* Sidebar with workspaces */}
-          <Box
+          <CssBaseline />
+          <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+          <Container
             sx={{
-              position: "fixed",
-              top: 110, // Fixed from the top
-              bottom: 40, // Extend to the bottom of the viewport
-              left: "1%",
               display: "flex",
               flexDirection: "column",
-              backgroundColor: "white",
-              zIndex: "1000",
-              color: "black",
-              width: "20%",
-              padding: "20px",
-              boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
-              borderRadius: "10px",
-              transition: "background-color 0.3s ease-in-out",
-              border: "1px solid black",
-              overflowY: "auto", // Add scrollbar when content exceeds viewport height
-              scrollbarWidth: "thin", // Customize scrollbar width
-              scrollbarColor: "rgba(255, 255,255, 0.2) transparent", // Customize scrollbar color
+              alignItems: "center",
+              textAlign: "center",
+              pt: { xs: 5, sm: 12 },
+              pb: { xs: 8, sm: 12 },
+              transition: "opacity 1s", // Add transition for opacity
+              opacity: headerLoaded ? 1 : 0, // Set opacity based on headerLoaded state
             }}
+            style={{ width: "100%" }}
           >
-            <Typography
-              variant="h6"
+            {workspaces.length === 0 && (
+              <Box>
+                <img
+                  src={arrowImage}
+                  alt="Arrow"
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    position: "absolute",
+                    top: "50%",
+                    left: "25%",
+                    transform: "translate(-50%, -50%) rotate(180deg)",
+                  }}
+                />
+                <Typography
+                  variant="body1"
+                  sx={{
+                    position: "absolute",
+                    top: "52%",
+                    left: "calc(25% + 30px)",
+                    transform: "translateY(-50%)",
+                    color: "black",
+                  }}
+                >
+                  You don't have any workspace.
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    position: "absolute",
+                    top: "55%",
+                    left: "calc(25% + 30px)",
+                    transform: "translateY(-50%)",
+                    color: "black",
+                  }}
+                >
+                  Create one here
+                </Typography>
+              </Box>
+            )}
+
+            {/* Sidebar with workspaces */}
+            <Box
               sx={{
+                position: "fixed",
+                top: 110, // Fixed from the top
+                left: "1%",
+                display: "flex",
+                flexDirection: "column",
+                backgroundColor: "white",
+                zIndex: "1000",
                 color: "black",
-                width: "100%",
-                fontSize: "24px",
-                textAlign: "left",
-                mb: 2,
-                position: "relative",
+                width: "20%",
+                height: "70vh",
+                padding: "20px",
+                boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+                borderRadius: "10px",
+                transition: "background-color 0.3s ease-in-out",
+                border: "1px solid black",
+                overflowY: "auto", // Add scrollbar when content exceeds viewport height
+                scrollbarWidth: "thin", // Customize scrollbar width
+                scrollbarColor: "rgba(255, 255,255, 0.2) transparent", // Customize scrollbar color
+                // Media query for smaller screens
+                "@media (max-width: 1400px)": {
+                  display: "flex",
+                  alignItems: "center",
+                  position: "absolute",
+                  top: "15%", // Adjust top position for center alignment
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "80%", // Adjust width for smaller screens
+                  height: "30vh",
+                },
               }}
             >
-              Your Workspaces
-              <IconButton
-                onClick={() => setOpenDialog(true)}
+              <Typography
+                variant="h6"
                 sx={{
                   color: "black",
-                  position: "absolute",
-                  right: 0,
-                  top: "50%",
-                  transform: "translateY(-50%)",
+                  width: "100%",
+                  fontSize: "24px",
+                  textAlign: "left",
+                  mb: 2,
+                  position: "relative",
                 }}
               >
-                <AddIcon />
-              </IconButton>
-            </Typography>
-
-            <Divider />
-            <List sx={{ width: "100%" }}>
-              {workspaces.map((workspace, index) => (
-                <ListItem
-                  key={index}
-                  component={Link}
-                  to={{
-                    pathname: "/dash",
-                    search: `?workspace=${workspace.id}`,
-                  }}
-                  button
-                  onClick={() => fetchQuizzes(workspace.id)}
+                Your Workspaces
+                <IconButton
+                  onClick={() => setOpenDialog(true)}
                   sx={{
-                    borderRadius: "5px",
-                    transition: "color 0.3s ease", // Adjust transition for color only
-                    "&:hover": {
-                      color: "inherit", // Keep the hover color same as the default
-                      backgroundColor:
-                        workspaceId === workspace.id ? "#333" : "#F5F5F5", // Keep the background color if already selected
-                    },
-                    color: workspaceId === workspace.id ? "#white" : "inherit", // Add text color when workspace ID matches the query
-                    backgroundColor:
-                      workspaceId === workspace.id ? "#333" : "inherit", // Add background color when workspace ID matches the query
+                    color: "black",
+                    position: "absolute",
+                    right: 0,
+                    top: "50%",
+                    transform: "translateY(-50%)",
                   }}
                 >
-                  <ListItemText
-                    primary={workspace.name}
-                    sx={{
-                      textAlign: "left",
-                      width: "70%",
-                      color: workspaceId === workspace.id ? "#fff" : "inherit",
-                    }}
-                  />
-                  <ListItemText
-                    primary={workspace.quizCount}
-                    sx={{
-                      textAlign: "right",
-                      width: "30%",
-                      color: workspaceId === workspace.id ? "#fff" : "inherit",
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-
-          {/* Quizzes */}
-          <Box mt={10} ml={20}>
-            {workspaceId && (
-              <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                {
-                  workspaces.find((workspace) => workspace.id === workspaceId)
-                    ?.name
-                }
+                  <AddIcon />
+                </IconButton>
               </Typography>
-            )}
-            <Grid container spacing={2} sx={{ justifyContent: "left" }}>
-              {/* Placeholder card */}
-              <Grid item xs={12} sm={4} md={4} lg={4}>
-                <Link
-                  to={`/${workspaceId}/create`}
-                  style={{ textDecoration: "none" }}
+
+              <Divider />
+              <List sx={{ width: "100%" }}>
+                {workspaces.map((workspace, index) => (
+                  <ListItem
+                    key={index}
+                    component={Link}
+                    to={{
+                      pathname: "/dash",
+                      search: `?workspace=${workspace.id}`,
+                    }}
+                    button
+                    onClick={() => fetchQuizzes(workspace.id)}
+                    sx={{
+                      borderRadius: "5px",
+                      transition: "color 0.3s ease", // Adjust transition for color only
+                      "&:hover": {
+                        color: "inherit", // Keep the hover color same as the default
+                        backgroundColor:
+                          workspaceId === workspace.id ? "#333" : "#F5F5F5", // Keep the background color if already selected
+                      },
+                      color:
+                        workspaceId === workspace.id ? "#white" : "inherit", // Add text color when workspace ID matches the query
+                      backgroundColor:
+                        workspaceId === workspace.id ? "#333" : "inherit", // Add background color when workspace ID matches the query
+                    }}
+                  >
+                    <ListItemText
+                      primary={workspace.name}
+                      sx={{
+                        textAlign: "left",
+                        width: "70%",
+                        color:
+                          workspaceId === workspace.id ? "#fff" : "inherit",
+                      }}
+                    />
+                    <ListItemText
+                      primary={workspace.quizCount}
+                      sx={{
+                        textAlign: "right",
+                        width: "30%",
+                        color:
+                          workspaceId === workspace.id ? "#fff" : "inherit",
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+
+            {/* Quizzes */}
+            <Box
+              mt={10}
+              ml={20}
+              sx={{
+                position: "relative", // Set position to relative
+                top: 0, // Reset the top position
+                "@media (max-width: 1400px)": {
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  ml: 0,
+                  top: "30vh", // Shift content downwards on smaller screens
+                },
+              }}
+            >
+              {workspaceId && (
+                <Typography
+                  variant="h4"
                   sx={{
-                    "&:hover": {
-                      transform: "scale(1.05)", // Scale up on hover
-                      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Add shadow on hover
+                    marginBottom: 2,
+                    "@media (max-width: 1400px)": {
+                      fontSize: "2rem", // Decrease the font size on smaller screens
                     },
-                    cursor: "pointer", // Change cursor to pointer on hover
-                    textDecoration: "none", // Remove underline from link
-                    color: "inherit", // Inherit color from parent
                   }}
                 >
-                  <Card
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      minWidth: 275,
-                      height: "150px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                      borderRadius: "10px",
-                      border: "1px solid #ccc",
-                      position: "relative",
-                      transition:
-                        "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out", // Add transition for smooth hover effect
-                    }}
-                  >
-                    {/* Card content */}
-                    <Box sx={{ color: "#999" }}>
-                      <AddIcon sx={{ fontSize: "5rem" }} />
-                    </Box>
-                  </Card>
-                </Link>
-              </Grid>
-              {/* Actual quizzes cards */}
-              {quizzes.map((quiz, index) => (
+                  {
+                    workspaces.find((workspace) => workspace.id === workspaceId)
+                      ?.name
+                  }
+                </Typography>
+              )}
+              {workspaceId && (
                 <Grid
-                  item
-                  key={index}
-                  xs={12}
-                  sm={4}
-                  md={4}
-                  lg={4}
+                  container
+                  spacing={2}
                   sx={{
-                    ...(index === 0 &&
-                      quizzes.length === 1 && { marginLeft: "150px" }),
+                    justifyContent: "left",
+                    "@media (max-width: 600px)": {
+                      justifyContent: "center", // Change justifyContent to center on smaller screens
+                      width: "300px",
+                    },
+                    "@media (max-width: 1400px) and (min-width: 875px)": {
+                      justifyContent: "left", // Change justifyContent to left between 1400px and 600px
+                    },
+                    "@media (max-width: 875px)": {
+                      justifyContent: "center", // Center items when screen size is below 875px
+                      flexDirection: "column", // Display items in a column
+                    },
                   }}
                 >
-                  {/* Rest of the card content */}
-                  <Card
-                    sx={{
-                      minWidth: 275,
-                      height: "150px",
-                      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                      borderRadius: "10px",
-                      border: "1px solid #ccc",
-                      position: "relative",
-                      transition: "transform 0.3s ease-in-out", // Add transition for smooth hover effect
-
-                      transform: flippedCards[index]
-                        ? "rotateY(180deg)"
-                        : "none",
-                    }}
-                  >
-                    <CardHeader
+                  {/* Placeholder card */}
+                  <Grid item xs={12} sm={4} md={4} lg={4}>
+                    <Link
+                      to={`/${workspaceId}/create`}
+                      style={{ textDecoration: "none" }}
                       sx={{
-                        backgroundColor: quiz.color,
-                        color: "#fff",
-                        textAlign: "left",
-                        padding: "20px",
-                        borderRadius: "5px 5px 0 0",
-                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                        height: "40px",
-                        position: "relative",
+                        "&:hover": {
+                          transform: "scale(1.05)", // Scale up on hover
+                          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Add shadow on hover
+                        },
+                        cursor: "pointer", // Change cursor to pointer on hover
+                        textDecoration: "none", // Remove underline from link
+                        color: "inherit", // Inherit color from parent
                       }}
                     >
-                      {expandedBannerIndex === index && (
-                        <Box>
-                          <Typography variant="body1">
-                            Unique Code: {quiz.uniqueCode}
-                          </Typography>
-                        </Box>
-                      )}
-                      {expandedBannerIndex === index && (
-                        <Box>
-                          <Typography variant="body1">
-                            Submissions: {quiz.attempted.length}
-                          </Typography>
-                        </Box>
-                      )}
-                      {expandedBannerIndex === index && (
-                        <Box>
-                          <Typography variant="body1">
-                            Created: {getTimeElapsed(quiz.createdAt)}
-                          </Typography>
-                        </Box>
-                      )}
-                    </CardHeader>
-
-                    <CardContent
-                      sx={{
-                        padding: "20px",
-                        textAlign: "left",
-                        position: "relative",
-                        display: "flex",
-                        flexDirection: "column",
-                        transform: flippedCards[index]
-                          ? "rotateY(180deg)"
-                          : "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "0%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: "40px", // Diameter of the circle
-                          height: "40px", // Diameter of the circle
-                          backgroundColor: quiz.color, // Use the quiz color for the circle
-                          borderRadius: "50%", // Make it circular
-                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)", // Optional: Add shadow
-                        }}
-                      />
-                      <div
-                        style={{
+                      <Card
+                        sx={{
                           display: "flex",
                           justifyContent: "center",
                           alignItems: "center",
-                          position: "absolute",
-                          top: "0%",
-                          left: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: "35px", // Adjust diameter as needed
-                          height: "35px", // Adjust diameter as needed
-                          backgroundColor: "#fff", // White color
-                          borderRadius: "50%", // Circular shape
+                          minWidth: 275,
+                          height: "150px",
+                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                          borderRadius: "10px",
+                          border: "1px solid #ccc",
+                          position: "relative",
+                          transition:
+                            "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out", // Add transition for smooth hover effect
+                          "@media (max-width: 1400px)": {
+                            position: "relative",
+                            width: "1px",
+                            mr: 0,
+                          },
                         }}
                       >
-                        <IconButton
-                          sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-                          onClick={() => toggleCardFlip(index)}
+                        {/* Card content */}
+                        <Box sx={{ color: "#999" }}>
+                          <AddIcon sx={{ fontSize: "5rem" }} />
+                        </Box>
+                      </Card>
+                    </Link>
+                  </Grid>
+                  {/* Actual quizzes cards */}
+                  {quizzes.map((quiz, index) => (
+                    <Grid
+                      item
+                      key={index}
+                      xs={12}
+                      sm={4}
+                      md={4}
+                      lg={4}
+                      sx={{
+                        ...(index === 0 &&
+                          quizzes.length === 1 && { marginLeft: "150px" }),
+                        "@media (max-width: 1400px)": {
+                          marginLeft: 0, // Remove left margin on smaller screens
+                          marginRight: 0, // Remove right margin on smaller screens
+                        },
+                      }}
+                    >
+                      {/* Rest of the card content */}
+                      <Card
+                        sx={{
+                          minWidth: 275,
+                          height: "150px",
+                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                          borderRadius: "10px",
+                          border: "1px solid #ccc",
+                          position: "relative",
+                          "@media (max-width: 1400px)": {
+                            position: "relative",
+                            width: "1px",
+                          },
+                          transition: "transform 0.3s ease-in-out", // Add transition for smooth hover effect
+
+                          transform: flippedCards[index]
+                            ? "rotateY(180deg)"
+                            : "none",
+                        }}
+                      >
+                        <CardHeader
+                          sx={{
+                            backgroundColor: quiz.color,
+                            color: "#fff",
+                            textAlign: "left",
+                            padding: "20px",
+                            borderRadius: "5px 5px 0 0",
+                            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                            height: "40px",
+                            position: "relative",
+                          }}
                         >
-                          <AutorenewIcon style={{ color: quiz.color }} />
-                        </IconButton>
-                      </div>
-                      {flippedCards[index] ? (
-                        <>
-                          {/* Quiz title displayed at the top */}
+                          {expandedBannerIndex === index && (
+                            <Box>
+                              <Typography variant="body1">
+                                Unique Code: {quiz.uniqueCode}
+                              </Typography>
+                            </Box>
+                          )}
+                          {expandedBannerIndex === index && (
+                            <Box>
+                              <Typography variant="body1">
+                                Submissions: {quiz.attempted.length}
+                              </Typography>
+                            </Box>
+                          )}
+                          {expandedBannerIndex === index && (
+                            <Box>
+                              <Typography variant="body1">
+                                Created: {getTimeElapsed(quiz.createdAt)}
+                              </Typography>
+                            </Box>
+                          )}
+                        </CardHeader>
 
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              marginTop: 1,
-                              marginBottom: 0.5,
-                              fontWeight: "800", // Bold font weight
-                              textAlign: "center", // Center align text
+                        <CardContent
+                          sx={{
+                            padding: "20px",
+                            textAlign: "left",
+                            position: "relative",
+                            display: "flex",
+                            flexDirection: "column",
+                            transform: flippedCards[index]
+                              ? "rotateY(180deg)"
+                              : "none",
+                          }}
+                        >
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "0%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "40px", // Diameter of the circle
+                              height: "40px", // Diameter of the circle
+                              backgroundColor: quiz.color, // Use the quiz color for the circle
+                              borderRadius: "50%", // Make it circular
+                              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)", // Optional: Add shadow
                             }}
-                          >
-                            {quiz.title}
-                          </Typography>
-                          {/* Bottom row of icons */}
-                          <Box
-                            sx={{
+                          />
+                          <div
+                            style={{
                               display: "flex",
-                              justifyContent: "space-evenly",
-                              marginTop: 0.5,
-                              marginBottom: 0,
+                              justifyContent: "center",
+                              alignItems: "center",
+                              position: "absolute",
+                              top: "0%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "35px", // Adjust diameter as needed
+                              height: "35px", // Adjust diameter as needed
+                              backgroundColor: "#fff", // White color
+                              borderRadius: "50%", // Circular shape
                             }}
                           >
-                            <Tooltip
-                              title={quiz.isLive ? "Pause" : "Publish"}
-                              placement="top"
+                            <IconButton
+                              sx={{ color: "rgba(255, 255, 255, 0.7)" }}
+                              onClick={() => toggleCardFlip(index)}
                             >
-                              <IconButton
-                                onClick={() => handlePublishQuiz(quiz)}
-                              >
-                                {quiz.isLive ? (
-                                  <StopIcon
-                                    sx={{
-                                      fontSize: 15,
-                                      color: "black", // Set icon color to black
-                                      "&:hover": {
-                                        color: "#F44336", // Change icon color to red on hover
-                                      },
-                                    }}
-                                  />
-                                ) : (
-                                  <PlayCircleFilledIcon
-                                    sx={{
-                                      fontSize: 15,
-                                      color: "black", // Set icon color to black
-                                      "&:hover": {
-                                        color: "#4CAF50", // Change icon color to green on hover
-                                      },
-                                    }}
-                                  />
-                                )}
-                              </IconButton>
-                            </Tooltip>
+                              <AutorenewIcon style={{ color: quiz.color }} />
+                            </IconButton>
+                          </div>
+                          {flippedCards[index] ? (
+                            <>
+                              {/* Quiz title displayed at the top */}
 
-                            <Tooltip title="Share" placement="top">
-                              <IconButton
-                                onClick={() => handleShareButtonClick(quiz)}
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  marginTop: 1,
+                                  marginBottom: 0.5,
+                                  fontWeight: "800", // Bold font weight
+                                  textAlign: "center", // Center align text
+                                }}
                               >
-                                <ShareIcon
-                                  sx={{
-                                    fontSize: 15,
-                                    color: "black", // Set icon color to black
-                                    "&:hover": {
-                                      color: "#2196F3", // Change icon color to blue on hover
-                                    },
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Edit" placement="top">
-                              <IconButton onClick={() => handleEditClick(quiz)}>
-                                <EditIcon
-                                  sx={{
-                                    fontSize: 15,
-                                    color: "black", // Set icon color to black
-                                    "&:hover": {
-                                      color: "#FFEB3B", // Change icon color to yellow on hover
-                                    },
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
+                                {quiz.title}
+                              </Typography>
+                              {/* Bottom row of icons */}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-evenly",
+                                  marginTop: 0.5,
+                                  marginBottom: 0,
+                                }}
+                              >
+                                <Tooltip
+                                  title={quiz.isLive ? "Pause" : "Publish"}
+                                  placement="top"
+                                >
+                                  <IconButton
+                                    onClick={() => handlePublishQuiz(quiz)}
+                                  >
+                                    {quiz.isLive ? (
+                                      <StopIcon
+                                        sx={{
+                                          fontSize: 15,
+                                          color: "black", // Set icon color to black
+                                          "&:hover": {
+                                            color: "#F44336", // Change icon color to red on hover
+                                          },
+                                        }}
+                                      />
+                                    ) : (
+                                      <PlayCircleFilledIcon
+                                        sx={{
+                                          fontSize: 15,
+                                          color: "black", // Set icon color to black
+                                          "&:hover": {
+                                            color: "#4CAF50", // Change icon color to green on hover
+                                          },
+                                        }}
+                                      />
+                                    )}
+                                  </IconButton>
+                                </Tooltip>
 
-                            <Tooltip title="Check Responses" placement="top">
-                              <IconButton
-                                onClick={() => handleCheckResultClick(quiz)}
+                                <Tooltip title="Share" placement="top">
+                                  <IconButton
+                                    onClick={() => handleShareButtonClick(quiz)}
+                                  >
+                                    <ShareIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: "black", // Set icon color to black
+                                        "&:hover": {
+                                          color: "#2196F3", // Change icon color to blue on hover
+                                        },
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit" placement="top">
+                                  <IconButton
+                                    onClick={() => handleEditClick(quiz)}
+                                  >
+                                    <EditIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: "black", // Set icon color to black
+                                        "&:hover": {
+                                          color: "#FFEB3B", // Change icon color to yellow on hover
+                                        },
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+
+                                <Tooltip
+                                  title="Check Responses"
+                                  placement="top"
+                                >
+                                  <IconButton
+                                    onClick={() => handleCheckResultClick(quiz)}
+                                  >
+                                    <CheckIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: "black", // Set icon color to black
+                                        "&:hover": {
+                                          color: "#FF9800", // Change icon color to orange on hover (you can adjust the color as needed)
+                                        },
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Analytics" placement="top">
+                                  <IconButton
+                                    onClick={() => handleAnalytics(quiz)}
+                                  >
+                                    <BarChartIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: "black", // Set icon color to black
+                                        "&:hover": {
+                                          color: "#9C27B0", // Change icon color to purple on hover (you can adjust the color as needed)
+                                        },
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete" placement="top">
+                                  <IconButton
+                                    onClick={() => handleDeleteQuiz(quiz)}
+                                  >
+                                    <DeleteIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: "black", // Set icon color to black
+                                        "&:hover": {
+                                          color: "#F44336", // Change icon color to red on hover
+                                        },
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </>
+                          ) : (
+                            // Render default content when the card is not flipped
+                            <>
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  color: "black",
+                                  width: "100%",
+                                  fontSize: "24px",
+                                  fontWeight: "800",
+                                  textAlign: "left",
+                                  position: "relative",
+                                }}
                               >
-                                <CheckIcon
-                                  sx={{
-                                    fontSize: 15,
-                                    color: "black", // Set icon color to black
-                                    "&:hover": {
-                                      color: "#FF9800", // Change icon color to orange on hover (you can adjust the color as needed)
-                                    },
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Analytics" placement="top">
-                              <IconButton onClick={() => handleAnalytics(quiz)}>
-                                <BarChartIcon
-                                  sx={{
-                                    fontSize: 15,
-                                    color: "black", // Set icon color to black
-                                    "&:hover": {
-                                      color: "#9C27B0", // Change icon color to purple on hover (you can adjust the color as needed)
-                                    },
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete" placement="top">
-                              <IconButton
-                                onClick={() => handleDeleteQuiz(quiz)}
+                                {quiz.title}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: "400",
+                                  fontSize: "20",
+                                  color: "grey",
+                                  cursor: "pointer",
+                                  position: "absolute",
+                                  top: "30px", // Adjust vertical positioning as needed
+                                  right: "20px", // Position to the right of the card
+                                }}
+                                onClick={() =>
+                                  handleCopyUniqueCode(
+                                    quiz.uniqueCode,
+                                    quiz.title
+                                  )
+                                }
                               >
-                                <DeleteIcon
-                                  sx={{
-                                    fontSize: 15,
-                                    color: "black", // Set icon color to black
-                                    "&:hover": {
-                                      color: "#F44336", // Change icon color to red on hover
-                                    },
-                                  }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </>
-                      ) : (
-                        // Render default content when the card is not flipped
-                        <>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              color: "black",
-                              width: "100%",
-                              fontSize: "24px",
-                              fontWeight: "800",
-                              textAlign: "left",
-                              position: "relative",
-                            }}
-                          >
-                            {quiz.title}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: "400",
-                              fontSize: "20",
-                              color: "grey",
-                              cursor: "pointer",
-                              position: "absolute",
-                              top: "30px", // Adjust vertical positioning as needed
-                              right: "20px", // Position to the right of the card
-                            }}
-                            onClick={() =>
-                              handleCopyUniqueCode(quiz.uniqueCode, quiz.title)
-                            }
-                          >
-                            {quiz.uniqueCode}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            sx={{ position: "relative", bottom: 0, left: 0 }}
-                          >
-                            SUBMISSIONS
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            fontStyle="italic"
-                            sx={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: "80px",
-                            }}
-                          >
-                            {quiz.attempted.length} {/* Count of submissions */}
-                          </Typography>
-                          {/* Time elapsed at the bottom right */}
-                          <Typography
-                            variant="caption"
-                            color="textSecondary"
-                            sx={{ position: "absolute", bottom: 0, right: 5 }}
-                          >
-                            {getTimeElapsed(quiz.createdAt)}
-                          </Typography>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
+                                {quiz.uniqueCode}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                sx={{
+                                  position: "relative",
+                                  bottom: 0,
+                                  left: 0,
+                                }}
+                              >
+                                SUBMISSIONS
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                fontStyle="italic"
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: "80px",
+                                }}
+                              >
+                                {quiz.attempted.length}{" "}
+                                {/* Count of submissions */}
+                              </Typography>
+                              {/* Time elapsed at the bottom right */}
+                              <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  right: 5,
+                                }}
+                              >
+                                {getTimeElapsed(quiz.createdAt)}
+                              </Typography>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
                 </Grid>
-              ))}
-            </Grid>
-          </Box>
+              )}
+            </Box>
 
-          {/* Dialog for creating new workspace */}
-          <Dialog
-            open={openDialog}
-            onClose={() => setOpenDialog(false)}
-            fullWidth
-            maxWidth="sm"
-            TransitionComponent={Slide}
-            sx={{
-              borderRadius: 10,
-              border: "1px solid #ccc",
-            }}
-          >
-            <DialogTitle>Create your new workspace</DialogTitle>
-            <DialogContent>
-              <TextField
-                label="Name of your Workspace"
-                variant="outlined"
-                value={workspaceName}
-                onChange={(e) => setWorkspaceName(e.target.value)}
-                fullWidth
-                autoFocus
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-              <Button
-                onClick={handleCreateWorkspace}
-                variant="contained"
-                color="primary"
-              >
-                Create
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={3000} // Adjust duration as needed
-            onClose={handleSnackbarShareClose}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          >
-            <Alert
-              onClose={handleSnackbarShareClose}
-              severity="success"
-              sx={{ width: "100%" }}
+            {/* Dialog for creating new workspace */}
+            <Dialog
+              open={openDialog}
+              onClose={() => setOpenDialog(false)}
+              fullWidth
+              maxWidth="sm"
+              TransitionComponent={Slide}
+              sx={{
+                borderRadius: 10,
+                border: "1px solid #ccc",
+              }}
             >
-              {snackbarMessage}
-            </Alert>
-          </Snackbar>
-        </Container>
-      </Box>
-    </ThemeProvider>
+              <DialogTitle>Create your new workspace</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Name of your Workspace"
+                  variant="outlined"
+                  value={workspaceName}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  fullWidth
+                  autoFocus
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                <Button
+                  onClick={handleCreateWorkspace}
+                  variant="contained"
+                  color="primary"
+                >
+                  Create
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={3000} // Adjust duration as needed
+              onClose={handleSnackbarShareClose}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert
+                onClose={handleSnackbarShareClose}
+                severity="success"
+                sx={{ width: "100%" }}
+              >
+                {snackbarMessage}
+              </Alert>
+            </Snackbar>
+          </Container>
+        </Box>
+      </ThemeProvider>
+    ) : (
+      <UserAttempts />
+    )
+  ) : (
+    // You can render a loading indicator while the data is being fetched
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <CircularProgress />
+    </Box>
   );
 }

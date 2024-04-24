@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   quizzes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Quiz" }],
+  isCreator: { type: Boolean, required: true },
 });
 
 const User = mongoose.model("User", userSchema);
@@ -204,14 +205,20 @@ function generateUniqueCode() {
 // Routes
 // Signup route
 app.post("/users/signup", async (req, res) => {
-  const { fname, lname, email, password } = req.body;
+  const { fname, lname, email, password, isCreator } = req.body;
   const user = await User.findOne({ email });
-  const hashedPassword = bcryptjs.hashSync(password, 10);
 
   if (user) {
     res.status(403).json({ message: "Email already exists" });
   } else {
-    const newUser = new User({ fname, lname, email, password: hashedPassword });
+    const hashedPassword = bcryptjs.hashSync(password, 10);
+    const newUser = new User({
+      fname,
+      lname,
+      email,
+      password: hashedPassword,
+      isCreator,
+    });
     await newUser.save();
     const token = jwt.sign({ id: newUser._id, email: newUser.email }, SECRET, {
       expiresIn: "1h",
@@ -260,6 +267,47 @@ app.get("/user/data", authenticateJwt, async (req, res) => {
 // Fetch logged-in user route
 app.get("/users/me", authenticateJwt, async (req, res) => {
   res.json({ username: req.user.email });
+});
+
+app.get("/users/isCreator", authenticateJwt, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Assuming isCreator is a boolean field in the User model
+    const isCreator = user.isCreator;
+
+    res.json({ isCreator });
+  } catch (error) {
+    console.error("Error retrieving user:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.get("/user/:uniqueCode/owner", authenticateJwt, async (req, res) => {
+  try {
+    const { uniqueCode } = req.params;
+    const userId = req.user.id;
+    console.log("check");
+    // Find the quiz with the provided unique code
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Check if the authenticated user is the creator of the quiz
+    const isOwner = quiz.createdBy.equals(userId);
+    console.log({ isOwner });
+    res.json({ isOwner });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 app.post("/user/create/trial", async (req, res) => {
@@ -418,7 +466,39 @@ app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
 app.delete("/quiz/:uniqueCode", async (req, res) => {
   try {
     const uniqueCode = req.params.uniqueCode;
-    await Quiz.deleteOne({ uniqueCode });
+    console.log("uniqueCode", uniqueCode);
+
+    // Retrieve workspace ID from query parameters
+    const workspaceId = req.query.workspace;
+    console.log("workspaceId", workspaceId);
+
+    // Check if workspaceId is provided
+    if (!workspaceId) {
+      return res.status(400).json({ error: "Workspace ID is required" });
+    }
+
+    // Step 1: Find the quizId using uniqueCode in the Quiz schema
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    const quizId = quiz._id;
+
+    // Step 2: Delete the quiz from the Quiz schema using the found quizId
+    await Quiz.deleteOne({ _id: quizId });
+
+    // Step 3: Find the workspace by workspaceId in the Workspace schema
+    const workspace = await Workspace.findOne({ _id: workspaceId });
+
+    if (!workspace) {
+      return res.status(404).json({ error: "Workspace not found" });
+    }
+
+    // Step 4: Delete the quizId from the quizzes array of the workspace
+    workspace.quizzes.pull(quizId);
+    await workspace.save();
 
     // Respond with success status
     res.status(204).send();

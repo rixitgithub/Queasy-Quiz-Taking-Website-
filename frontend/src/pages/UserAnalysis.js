@@ -14,7 +14,8 @@ import {
   TableCell,
   TableContainer,
 } from "@mui/material";
-import { alpha } from "@mui/material";
+import { useMediaQuery, alpha } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Footer from "../components/Footer";
@@ -27,13 +28,19 @@ export default function UserAnalysis() {
   const [showCustomTheme, setShowCustomTheme] = useState(true);
 
   const [quizTitle, setQuizTitle] = useState("");
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
   const [marksDistribution, setMarksDistribution] = useState({
     options: {
       chart: {
         id: "marks-distribution-chart",
         type: "donut",
       },
-      labels: ["Correct Answers", "Incorrect Answers", "Unattempted Questions"],
+
+      labels: isSmallScreen
+        ? ["Correct", "Incorrect", "Unattempted"]
+        : ["Correct Answers", "Incorrect Answers", "Unattempted Questions"],
+
       colors: ["#7cb5ec", "#f15c80", "#808080"],
       plotOptions: {
         pie: {
@@ -659,7 +666,7 @@ export default function UserAnalysis() {
             pt: { xs: 5, sm: 12 },
             pb: { xs: 8, sm: 12 },
           }}
-          style={{ width: "110%" }}
+          style={{ width: "100%" }}
         >
           <Box
             sx={{
@@ -820,18 +827,22 @@ export default function UserAnalysis() {
               justifyContent: "center",
               width: "95%",
               marginTop: { xs: 20, sm: 20 },
+              flexDirection: { xs: "column", sm: "row" }, // Stack cards vertically on small screens
             }}
           >
             <Box
               sx={{
-                width: "50%",
-                marginRight: "10px",
+                width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
+                marginLeft: { xs: 0, sm: 10 }, // Add margin left only on larger screens to separate cards
                 backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
                 borderRadius: "8px",
                 boxShadow: showCustomTheme
                   ? "0px 2px 4px rgba(0, 0, 0, 0.1)"
                   : "0px 2px 4px rgba(255, 255, 255, 0.1)",
                 padding: "20px",
+                maxHeight: "450px",
+                overflowY: "auto",
+                flexDirection: { xs: "column", sm: "row" }, // Stack items vertically on small screens
               }}
             >
               <Typography
@@ -844,17 +855,23 @@ export default function UserAnalysis() {
               >
                 Question Analysis
               </Typography>
-              <Chart
-                options={marksDistribution.options}
-                series={marksDistribution.series}
-                type="donut"
-                width="100%"
-              />
+              {/* Display labels and graph vertically on small screens */}
+              <Box sx={{ width: "100%", marginBottom: { xs: "20px", sm: 0 } }}>
+                <Chart
+                  options={marksDistribution.options}
+                  series={marksDistribution.series}
+                  type="donut"
+                  width="100%"
+                  labels={
+                    isSmallScreen ? null : marksDistribution.options.labels
+                  } // Render labels only on larger screens
+                />
+              </Box>
             </Box>
 
             <Box
               sx={{
-                width: "50%",
+                width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
                 marginLeft: "10px",
                 backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
                 borderRadius: "8px",
@@ -864,6 +881,7 @@ export default function UserAnalysis() {
                 padding: "20px",
                 maxHeight: "450px",
                 overflowY: "auto",
+                marginTop: isSmallScreen ? "3rem" : 0,
               }}
             >
               <Typography
@@ -898,12 +916,13 @@ export default function UserAnalysis() {
               display: "flex",
               justifyContent: "center",
               width: "95%",
-              marginTop: { xs: 20, sm: 20 },
+              marginTop: isSmallScreen ? 10 : { xs: 20, sm: 20 },
+              flexDirection: { xs: "column", sm: "row" }, // Stack cards vertically on small screens
             }}
           >
             <Box
               sx={{
-                width: "50%",
+                width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
                 marginRight: "10px",
                 backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
                 borderRadius: "8px",
@@ -949,7 +968,7 @@ export default function UserAnalysis() {
 
             <Box
               sx={{
-                width: "50%",
+                width: { xs: "100%", sm: "50%" }, // Full width on small screens, half width on larger screens
                 marginLeft: "10px",
                 backgroundColor: showCustomTheme ? "#FFFFFF" : "#263238",
                 borderRadius: "8px",
@@ -959,6 +978,7 @@ export default function UserAnalysis() {
                 padding: "20px",
                 maxHeight: "450px",
                 overflowY: "auto",
+                marginTop: isSmallScreen ? "3rem" : 0,
               }}
             >
               <Typography
