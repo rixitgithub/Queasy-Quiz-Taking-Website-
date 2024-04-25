@@ -33,7 +33,7 @@ function App() {
           <Route path="/:workspaceId/create" element={<Create />} />
           <Route path="/quiz/:quizId" element={<Details />} />
           <Route path="/quiz/:uniqueCode/update" element={<Update />} />
-          <Route path="/quiz/:quizId/start" element={<TakeQuiz />} />
+          <Route path="/quiz/:uniqueCode/start" element={<TakeQuiz />} />
           <Route path="/quiz/:quizId/questions" element={<Quiz />} />
           <Route
             path="/quiz/:uniqueCode/questions/:questionId"

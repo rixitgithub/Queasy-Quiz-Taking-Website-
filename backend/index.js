@@ -445,10 +445,10 @@ app.get("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
 app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
   try {
     const uniqueCode = req.params.uniqueCode;
-    const { title, questions } = req.body;
+    const { title, passingMarks, autoAssignMarks, questions } = req.body;
     const updatedQuiz = await Quiz.findOneAndUpdate(
       { uniqueCode: uniqueCode },
-      { title: title, questions: questions },
+      { title: title, passingMarks, autoAssignMarks, questions: questions },
       { new: true }
     ).populate("questions");
     if (!updatedQuiz) {
@@ -1771,14 +1771,17 @@ app.put("/quiz/:uniqueCode/isChecked", async (req, res) => {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
-    // Update isChecked property
-    quiz.isChecked = true;
+    // Toggle the isChecked property
+    quiz.isChecked = !quiz.isChecked;
 
     // Save the updated quiz
     await quiz.save();
 
-    // Send success response
-    res.json({ message: "Quiz isChecked property updated successfully" });
+    // Send success response with updated isChecked value
+    res.json({
+      isChecked: quiz.isChecked,
+      message: "Quiz isChecked property updated successfully",
+    });
   } catch (error) {
     console.error("Error updating quiz isChecked property:", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -325,7 +325,7 @@ export default function SignIn() {
 
   //check response
   const handleCheckResultClick = (quiz) => {
-    navigate(`/results/${quiz.uniqueCode}`);
+    navigate(`/quiz/${quiz.uniqueCode}/start`);
   };
 
   //analytics

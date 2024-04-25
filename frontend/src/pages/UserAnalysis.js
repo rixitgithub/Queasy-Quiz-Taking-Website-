@@ -610,9 +610,11 @@ export default function UserAnalysis() {
   const currentUserAnswers = questions
     .filter((question) => question.userId === userId)
     .map((question) => {
-      const commentObj = commentsData.find(
-        (comment) => comment.questionId === question.questionId
-      );
+      const commentObj =
+        commentsData &&
+        commentsData.find(
+          (comment) => comment.questionId === question.questionId
+        );
       return {
         ...question,
         comments: commentObj ? commentObj.comment : "-", // Default to "-" if comment not found

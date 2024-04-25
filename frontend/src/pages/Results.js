@@ -1,5 +1,12 @@
+import { Box, Container, CssBaseline } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import getLPTheme from "../getLPTheme";
+
+import { alpha } from "@mui/material";
+import AppAppBar from "../components/AppAppBar";
 
 const AnswersByQuiz = () => {
   const { uniqueCode } = useParams();
@@ -89,41 +96,78 @@ const AnswersByQuiz = () => {
     }
   };
 
+  const [mode, setMode] = React.useState("light");
+  const [showCustomTheme, setShowCustomTheme] = React.useState(true);
+  const LPtheme = createTheme(getLPTheme(mode));
+  const defaultTheme = createTheme({ palette: { mode } });
+  const toggleColorMode = () => {
+    setMode((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   return (
-    <div>
-      <h1>Answers by Quiz</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div>
-          <ul>
-            <li key={answers[currentUserIndex]}>
-              <p>User ID: {answers[currentUserIndex]}</p>
-              {!marksAssigned && (
-                <button
-                  onClick={() => assignMarks(answers[currentUserIndex], 10)}
-                >
-                  Assign Marks
+    <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
+      <Box
+        id="hero"
+        sx={(theme) => ({
+          width: "100%",
+          backgroundImage:
+            theme.palette.mode === "light"
+              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+          backgroundSize: "100% 20%",
+          backgroundRepeat: "no-repeat",
+        })}
+      >
+        <Container
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            pt: { xs: 14, sm: 20 },
+            pb: { xs: 8, sm: 12 },
+          }}
+        >
+          <CssBaseline />
+          <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+          <div>
+            <h1>Answers by Quiz</h1>
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <div>
+                <ul>
+                  <li key={answers[currentUserIndex]}>
+                    <p>User ID: {answers[currentUserIndex]}</p>
+                    {!marksAssigned && (
+                      <button
+                        onClick={() =>
+                          assignMarks(answers[currentUserIndex], 10)
+                        }
+                      >
+                        Assign Marks
+                      </button>
+                    )}
+                  </li>
+                </ul>
+                {/* Conditionally render a button to go to the first user's page */}
+                {currentUserIndex === 0 && (
+                  <button onClick={() => goToUserPage(answers[0])}>
+                    Go to First User
+                  </button>
+                )}
+                {/* Button to view results */}
+                <button onClick={handleViewResults}>
+                  Show Results to the participants
                 </button>
-              )}
-            </li>
-          </ul>
-          {/* Conditionally render a button to go to the first user's page */}
-          {currentUserIndex === 0 && (
-            <button onClick={() => goToUserPage(answers[0])}>
-              Go to First User
-            </button>
-          )}
-          {/* Button to view results */}
-          <button onClick={handleViewResults}>
-            Show Results to the participants
-          </button>
-        </div>
-      )}
-      {/* Listen for Enter key press event */}
-      <div tabIndex={0} onKeyPress={handleKeyPress}></div>
-      <Link to={`/quiz/${uniqueCode}/analysis`}>analytics</Link>
-    </div>
+              </div>
+            )}
+            {/* Listen for Enter key press event */}
+            <div tabIndex={0} onKeyPress={handleKeyPress}></div>
+            <Link to={`/quiz/${uniqueCode}/analysis`}>analytics</Link>
+          </div>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 };
 

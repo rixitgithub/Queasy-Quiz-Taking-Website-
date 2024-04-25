@@ -210,7 +210,7 @@ const CreateQuiz = () => {
               label="Assign Marks to Students after Quiz"
             />
             <Grid container spacing={1} alignItems="center" sx={{ mb: 2 }}>
-              <Grid item xs={7.79}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   label="Title"
                   fullWidth
@@ -219,7 +219,7 @@ const CreateQuiz = () => {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   label="Passing Marks"
                   fullWidth

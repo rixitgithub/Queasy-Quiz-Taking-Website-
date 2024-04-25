@@ -8,12 +8,14 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress"; // Import CircularProgress for loading indicator
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
 
-import { alpha } from "@mui/material";
+import { Button, IconButton, alpha } from "@mui/material";
 import AppAppBar from "../components/AppAppBar";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -300,236 +302,340 @@ const UserCheckResult = () => {
     }
   };
 
-  return (
-    <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
-      <Box
-        id="hero"
-        sx={(theme) => ({
-          width: "100%",
-          backgroundImage:
-            theme.palette.mode === "light"
-              ? "linear-gradient(180deg, #CEE5FD, #FFF)"
-              : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
-          backgroundSize: "100% 20%",
-          backgroundRepeat: "no-repeat",
-        })}
-      >
-        <Container
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: { xs: 14, sm: 20 },
-            pb: { xs: 8, sm: 12 },
-          }}
-        >
-          <CssBaseline />
-          <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+  const [owner, setOwner] = useState(null);
 
-          <Container>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center", // Align items and content vertically in the center
-                textAlign: "center", // Align text horizontally in the center
-              }}
-              style={{ width: "100%" }} // Set width to occupy full width of the container
-            >
-              <Typography variant="body1" sx={{ mb: 2, fontSize: "3rem" }}>
-                Press <strong>ENTER</strong> to go to the next user.
-              </Typography>
-              <Card
-                variant="outlined"
-                sx={{ width: "100%", maxWidth: "120rem" }}
+  useEffect(() => {
+    const fetchOwner = async () => {
+      try {
+        const token = localStorage.getItem("token"); // Assuming the token is stored in localStorage
+        if (!token) {
+          throw new Error("Token not found");
+        }
+
+        const response = await fetch(
+          `http://localhost:1234/user/${uniqueCode}/owner`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const data = await response.json();
+        console.log("Data:", data);
+        setOwner(data.isOwner);
+        // Update state or perform any other actions with the fetched data
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        // Handle error
+      }
+    };
+
+    fetchOwner();
+  }, [uniqueCode]); // Add params.uniqueCode to the dependency array to trigger the effect when it changes
+
+  return owner !== null ? (
+    owner ? (
+      <ThemeProvider theme={createTheme(getLPTheme("light"))}>
+        <Box
+          id="hero"
+          sx={(theme) => ({
+            width: "100%",
+            backgroundImage:
+              theme.palette.mode === "light"
+                ? "linear-gradient(180deg, #CEE5FD, #FFF)"
+                : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
+            backgroundSize: "100% 20%",
+            backgroundRepeat: "no-repeat",
+          })}
+        >
+          <Container
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              pt: { xs: 14, sm: 20 },
+              pb: { xs: 8, sm: 12 },
+            }}
+          >
+            <CssBaseline />
+            <AppAppBar mode={mode} toggleColorMode={toggleColorMode} />
+
+            <Container>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                }}
+                style={{ width: "100%" }}
               >
-                <CardContent>
-                  {loading ? (
-                    <Typography>Loading...</Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center", // Align items vertically in the center
+                    width: "100%",
+                    marginBottom: "1rem", // Add margin bottom for spacing
+                  }}
+                >
+                  <IconButton
+                    onClick={() => {
+                      setCurrentUserIndex((prevIndex) => {
+                        const previousIndex = prevIndex - 1;
+                        if (previousIndex >= 0) {
+                          navigate(
+                            `/quiz/${uniqueCode}/user/${userIds[previousIndex]}`
+                          );
+                          return previousIndex;
+                        } else {
+                          navigate("/dash");
+                          return 0;
+                        }
+                      });
+                    }}
+                    disabled={currentUserIndex === 0}
+                  >
+                    <ArrowBackIcon />
+                  </IconButton>
+
+                  {isSavedText ? (
+                    <Button
+                      variant="body1"
+                      sx={{ color: "#4caf50" }}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        backgroundColor: "#1976d2",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Saved
+                    </Button>
                   ) : (
-                    <>
-                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        {quizTitle}
-                      </Typography>
-                      <Typography variant="h6">
-                        {userInfo.fname} {userInfo.lname}
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontSize: "small" }}>
-                        {userInfo.email}
-                      </Typography>
-                      <Divider sx={{ my: 2 }} />
-                      {currentUserAnswers.map((answer, index) => (
-                        <Box
-                          key={index}
-                          sx={{ mt: 2, display: "flex", alignItems: "center" }}
-                        >
-                          <Card
-                            variant="outlined"
-                            sx={{ textAlign: "left", width: "80%" }}
-                          >
-                            <CardContent>
-                              <Typography variant="h6">
-                                Question: {answer.questionText}
-                              </Typography>
-                              <Typography variant="body1">
-                                Answer: {answer.answer}
-                              </Typography>
-                              <TextField
-                                id={`comments-${index}`}
-                                label="Tutor Comments"
-                                variant="outlined"
-                                fullWidth
-                                multiline
-                                rows={3}
-                                margin="normal"
-                                value={comments[answer.questionId] || ""}
-                                onChange={(e) => {
-                                  handleTextFieldChange();
-                                  const newComments = { ...comments };
-                                  newComments[answer.questionId] =
-                                    e.target.value;
-                                  setComments(newComments);
-                                }}
-                              />
-                              {/* Checkbox for indicating correct answer */}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  mt: 1,
-                                }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  id={`correct-answer-${index}`}
-                                  checked={answer.isCorrect || false}
-                                  onChange={(e) => {
-                                    const newAnswers = [...currentUserAnswers];
-                                    newAnswers[index].isCorrect =
-                                      e.target.checked;
-                                    setQuestions(newAnswers);
-                                  }}
-                                />
-                                <label htmlFor={`correct-answer-${index}`}>
-                                  Correct Answer
-                                </label>
-                              </Box>
-                            </CardContent>
-                          </Card>
+                    <Button
+                      onClick={handleSendMarks}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        backgroundColor: "#1976d2",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Save Marks
+                    </Button>
+                  )}
+
+                  <IconButton
+                    onClick={() => {
+                      setCurrentUserIndex((prevIndex) => {
+                        const nextIndex = prevIndex + 1;
+                        if (nextIndex < userIds.length) {
+                          setMarks({});
+                          setComments({}); // Reset comments when navigating to next user
+                          console.log("unique code issndo", uniqueCode);
+                          navigate(
+                            `/quiz/${uniqueCode}/user/${userIds[nextIndex]}`
+                          );
+                          return nextIndex;
+                        } else {
+                          navigate(`/quiz/${uniqueCode}/analysis`);
+                          return prevIndex; // No change in index if navigating to analysis
+                        }
+                      });
+                    }}
+                  >
+                    <ArrowForwardIcon />
+                  </IconButton>
+                </Box>
+
+                <Card
+                  variant="outlined"
+                  sx={{ width: "100%", maxWidth: "120rem" }}
+                >
+                  <CardContent>
+                    {loading ? (
+                      <Typography>Loading...</Typography>
+                    ) : (
+                      <>
+                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                          {quizTitle}
+                        </Typography>
+                        <Typography variant="h6">
+                          {userInfo.fname} {userInfo.lname}
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontSize: "small" }}>
+                          {userInfo.email}
+                        </Typography>
+                        <Divider sx={{ my: 2 }} />
+                        {currentUserAnswers.map((answer, index) => (
                           <Box
+                            key={index}
                             sx={{
-                              ml: 2,
-                              width: "5rem",
+                              mt: 2,
                               display: "flex",
                               alignItems: "center",
                             }}
-                            style={{ width: "10%" }}
                           >
-                            <input
-                              id={`marks-${index}`}
-                              type="number"
-                              placeholder="Marks"
-                              style={{
-                                width: "70px",
-                                marginRight: "0.5rem",
-                                padding: "0.5rem",
-                                border: "1px solid #ccc",
-                                borderRadius: "4px",
-                              }}
-                              value={marks[answer.questionId] || ""}
-                              onChange={(e) => {
-                                const newMarks = { ...marks };
-                                newMarks[answer.questionId] = e.target.value;
-                                setMarks(newMarks);
-                                setIsSaved(false);
-                                setIsChanged((prev) => ({
-                                  ...prev,
-                                  [index]: true,
-                                }));
-                              }}
-                            />
-                            <Typography
-                              variant="body1"
-                              style={{ width: "3rem" }}
+                            <Card
+                              variant="outlined"
+                              sx={{ textAlign: "left", width: "80%" }}
                             >
-                              /{answer.totalmarks}
-                            </Typography>
-                            <button
-                              onClick={() => {
-                                const newMarks = { ...marks };
-                                newMarks[answer.questionId] = answer.totalmarks;
-                                setMarks(newMarks);
-                                setIsSaved(false);
-                                setIsChanged((prev) => ({
-                                  ...prev,
-                                  [index]: true,
-                                }));
+                              <CardContent>
+                                <Typography variant="h6">
+                                  Question: {answer.questionText}
+                                </Typography>
+                                <Typography variant="body1">
+                                  Answer: {answer.answer}
+                                </Typography>
+                                <TextField
+                                  id={`comments-${index}`}
+                                  label="Tutor Comments"
+                                  variant="outlined"
+                                  fullWidth
+                                  multiline
+                                  rows={3}
+                                  margin="normal"
+                                  value={comments[answer.questionId] || ""}
+                                  onChange={(e) => {
+                                    handleTextFieldChange();
+                                    const newComments = { ...comments };
+                                    newComments[answer.questionId] =
+                                      e.target.value;
+                                    setComments(newComments);
+                                  }}
+                                />
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    mt: 1,
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    id={`correct-answer-${index}`}
+                                    checked={answer.isCorrect || false}
+                                    onChange={(e) => {
+                                      const newAnswers = [
+                                        ...currentUserAnswers,
+                                      ];
+                                      newAnswers[index].isCorrect =
+                                        e.target.checked;
+                                      setQuestions(newAnswers);
+                                    }}
+                                  />
+                                  <label htmlFor={`correct-answer-${index}`}>
+                                    Correct Answer
+                                  </label>
+                                </Box>
+                              </CardContent>
+                            </Card>
+                            <Box
+                              sx={{
+                                ml: 2,
+                                width: "5rem",
+                                display: "flex",
+                                alignItems: "center",
                               }}
-                              style={{
-                                padding: "0.5rem 1rem",
-                                marginLeft: "1rem",
-                                backgroundColor: "#4caf50",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                              }}
+                              style={{ width: "10%" }}
                             >
-                              Full Marks
-                            </button>
+                              <input
+                                id={`marks-${index}`}
+                                type="number"
+                                placeholder="Marks"
+                                style={{
+                                  width: "70px",
+                                  marginRight: "0.5rem",
+                                  padding: "0.5rem",
+                                  border: "1px solid #ccc",
+                                  borderRadius: "4px",
+                                }}
+                                value={marks[answer.questionId] || ""}
+                                onChange={(e) => {
+                                  const newMarks = { ...marks };
+                                  newMarks[answer.questionId] = e.target.value;
+                                  setMarks(newMarks);
+                                  setIsSaved(false);
+                                  setIsChanged((prev) => ({
+                                    ...prev,
+                                    [index]: true,
+                                  }));
+                                }}
+                              />
+                              <Typography
+                                variant="body1"
+                                style={{ width: "3rem" }}
+                              >
+                                /{answer.totalmarks}
+                              </Typography>
+                              <button
+                                onClick={() => {
+                                  const newMarks = { ...marks };
+                                  newMarks[answer.questionId] =
+                                    answer.totalmarks;
+                                  setMarks(newMarks);
+                                  setIsSaved(false);
+                                  setIsChanged((prev) => ({
+                                    ...prev,
+                                    [index]: true,
+                                  }));
+                                }}
+                                style={{
+                                  padding: "0.5rem 1rem",
+                                  marginLeft: "1rem",
+                                  backgroundColor: "#4caf50",
+                                  color: "#fff",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Full Marks
+                              </button>
+                            </Box>
                           </Box>
-                        </Box>
-                      ))}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </Box>
+                        ))}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            </Container>
           </Container>
-        </Container>
-      </Box>
-
-      <Box
-        sx={{
-          position: "fixed",
-          bottom: "2rem",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
-      >
-        {isSavedText ? ( // Display "Saved" text on the button if isSavedText is true
-          <button
-            variant="body1"
-            sx={{ color: "#4caf50" }}
-            style={{
-              padding: "0.5rem 1rem", // Add padding
-              backgroundColor: "#1976d2", // Set background color
-              color: "#fff", // Set text color
-              border: "none", // Remove border
-              borderRadius: "4px", // Add border radius
-              cursor: "pointer", // Add cursor pointer
-            }}
-          >
-            Saved
-          </button>
-        ) : (
-          <button
-            onClick={handleSendMarks}
-            style={{
-              padding: "0.5rem 1rem", // Add padding
-              backgroundColor: "#1976d2", // Set background color
-              color: "#fff", // Set text color
-              border: "none", // Remove border
-              borderRadius: "4px", // Add border radius
-              cursor: "pointer", // Add cursor pointer
-            }}
-          >
-            Save Marks
-          </button>
-        )}
-      </Box>
-    </ThemeProvider>
+        </Box>
+      </ThemeProvider>
+    ) : (
+      <>
+        <h2 style={{ textAlign: "center", color: "#333" }}>
+          Only the Owner of the quiz can access this page
+        </h2>
+      </>
+    )
+  ) : (
+    // You can render a loading indicator while the data is being fetched
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <CircularProgress />
+    </Box>
   );
 };
 
