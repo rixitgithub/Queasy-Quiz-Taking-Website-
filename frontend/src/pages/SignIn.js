@@ -112,9 +112,16 @@ export default function SignIn() {
             <Container sx={{ mb: 2, width: "100%" }}>
               <TextField
                 id="email"
-                label="Email Address"
+                hiddenLabel
                 size="small"
+                variant="outlined"
                 value={email}
+                aria-label="Enter your email address"
+                placeholder="Your email address"
+                inputProps={{
+                  autocomplete: "off",
+                  ariaLabel: "Enter your email address",
+                }}
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
                   mb: 2,
@@ -128,11 +135,17 @@ export default function SignIn() {
               />
               <TextField
                 id="password"
-                label="Password"
+                hiddenLabel
                 type={showPassword ? "text" : "password"}
                 variant="outlined"
                 size="small"
                 value={password}
+                aria-label="Enter your password"
+                placeholder="Your password"
+                inputProps={{
+                  autocomplete: "off",
+                  ariaLabel: "Enter your password",
+                }}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
                   mb: 2,

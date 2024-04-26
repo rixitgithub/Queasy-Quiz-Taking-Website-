@@ -952,7 +952,6 @@ export default function UserAnalysis() {
                     labels: {
                       ...timeDistribution.options.xaxis.labels,
                       formatter: function (val) {
-                        console.log("data check", timeDistribution.series[val]);
                         if (timeDistribution.series[val]) {
                           return timeDistribution.series[val].name;
                         } else {

@@ -13,7 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware to authenticate JWT
 const authenticateJwt = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader) {
@@ -22,7 +21,6 @@ const authenticateJwt = (req, res, next) => {
       if (err) {
         return res.sendStatus(403);
       }
-      // Extract every piece of information from the decoded token
       req.user = decoded;
       next();
     });
@@ -31,13 +29,11 @@ const authenticateJwt = (req, res, next) => {
   }
 };
 
-// MongoDB connection
 mongoose.connect(
   "mongodb+srv://irishittiwari:Rishittiwarim2004@cluster0.t56rdzz.mongodb.net/authentication",
   { useNewUrlParser: true, useUnifiedTopology: true }
 );
 
-// Models
 const userSchema = new mongoose.Schema({
   fname: { type: String, required: true },
   lname: { type: String, required: true },
@@ -51,7 +47,7 @@ const User = mongoose.model("User", userSchema);
 
 const questionSchema = new mongoose.Schema({
   text: { type: String, required: true },
-  type: { type: String, required: true }, // Change type to string
+  type: { type: String, required: true },
   options: {
     type: [String],
     required: function () {
@@ -65,7 +61,7 @@ const questionSchema = new mongoose.Schema({
     },
   },
   timeLimit: { type: Number, default: 120 },
-  marks: { type: Number, required: true }, // Marks for each question
+  marks: { type: Number, required: true },
 });
 
 const quizSchema = new mongoose.Schema({
@@ -78,9 +74,9 @@ const quizSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  autoAssignMarks: { type: Boolean, default: false }, // Automatic assignment of marks
-  passingMarks: { type: Number, default: 60 }, // Passing marks for the quiz
-  feedback: [{ type: String }], // Feedback array
+  autoAssignMarks: { type: Boolean, default: false },
+  passingMarks: { type: Number, default: 60 },
+  feedback: [{ type: String }],
   attempted: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   isChecked: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
@@ -125,14 +121,13 @@ const resultSchema = new mongoose.Schema({
     required: true,
   },
   uniqueCode: {
-    type: String, // Assuming unique code is a string
+    type: String,
     required: true,
   },
   totalMarks: {
     type: Number,
     required: true,
   },
-  // You can add more fields as needed
 });
 
 const Result = mongoose.model("Result", resultSchema);
@@ -140,11 +135,11 @@ const Result = mongoose.model("Result", resultSchema);
 const marksSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Assuming you have a User model
+    ref: "User",
     required: true,
   },
   questionId: {
-    type: String, // Assuming you have a Question model
+    type: String,
     required: true,
   },
   marks: {
@@ -197,7 +192,6 @@ const workspaceSchema = new mongoose.Schema({
 // Create the Workspace model
 const Workspace = mongoose.model("Workspace", workspaceSchema);
 
-// Helper function to generate unique code
 function generateUniqueCode() {
   return shortid.generate();
 }
@@ -292,7 +286,6 @@ app.get("/user/:uniqueCode/owner", authenticateJwt, async (req, res) => {
   try {
     const { uniqueCode } = req.params;
     const userId = req.user.id;
-    console.log("check");
     // Find the quiz with the provided unique code
     const quiz = await Quiz.findOne({ uniqueCode });
 
@@ -302,7 +295,6 @@ app.get("/user/:uniqueCode/owner", authenticateJwt, async (req, res) => {
 
     // Check if the authenticated user is the creator of the quiz
     const isOwner = quiz.createdBy.equals(userId);
-    console.log({ isOwner });
     res.json({ isOwner });
   } catch (error) {
     console.error("Error:", error);
@@ -326,11 +318,9 @@ app.post("/user/create/trial", async (req, res) => {
 
 app.post("/quizzes", authenticateJwt, async (req, res) => {
   try {
-    console.log("hihihiih");
     const { title, questions, autoAssignMarks, passingMarks, workspaceId } =
       req.body;
     const createdBy = req.user.id; // Extracting user ID from the decoded JWT token
-    console.log({ workspaceId });
     // Check if required fields are provided
     if (!title || !questions || questions.length === 0 || !workspaceId) {
       return res
@@ -454,7 +444,6 @@ app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
     if (!updatedQuiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
-    console.log("updated", updatedQuiz);
     res.status(200).json(updatedQuiz);
   } catch (error) {
     console.error("Error updating quiz:", error.message);
@@ -466,11 +455,9 @@ app.put("/quiz/:uniqueCode", authenticateJwt, async (req, res) => {
 app.delete("/quiz/:uniqueCode", async (req, res) => {
   try {
     const uniqueCode = req.params.uniqueCode;
-    console.log("uniqueCode", uniqueCode);
 
     // Retrieve workspace ID from query parameters
     const workspaceId = req.query.workspace;
-    console.log("workspaceId", workspaceId);
 
     // Check if workspaceId is provided
     if (!workspaceId) {
@@ -708,6 +695,9 @@ app.put("/time-remaining/:questionId", authenticateJwt, async (req, res) => {
     // Update remaining time
     timeRemaining.remainingTime = remainingTime;
 
+    console.log("+++++++++++++++++++++++++++++++");
+    console.log(timeRemaining);
+    console.log("+++++++++++++++++++++++++++++++");
     // Save updated timeRemaining
     await timeRemaining.save();
 
@@ -785,20 +775,15 @@ app.get("/time-remaining/:questionId", authenticateJwt, async (req, res) => {
 // Save answer route
 app.post("/:uniqueCode/save-answer", authenticateJwt, async (req, res) => {
   const { questionId, answer } = req.body; // Extract questionId and answer from request body
-  console.log("questionId", questionId);
-  console.log("answer", answer);
   const userId = req.user.id; // Extract user ID from the authenticated token
   const uniqueCode = req.params.uniqueCode;
 
   // Check if answer is undefined and assign null if true
   const answerToSave = answer !== undefined ? answer : 0;
-  console.log("asnwer to save", answerToSave);
   try {
     // Check if an answer already exists for the same user and question combination
     let existingAnswer = await Answer.findOne({ questionId, userId });
-    console.log({ existingAnswer });
     if (existingAnswer) {
-      console.log("existing answer");
       // If an answer exists, update it with the new answer
       existingAnswer.answer = answerToSave; // Use the modified answer value
       await existingAnswer.save();
@@ -812,8 +797,6 @@ app.post("/:uniqueCode/save-answer", authenticateJwt, async (req, res) => {
         uniqueCode,
       });
       await newAnswer.save();
-      console.log("newanswer", newAnswer);
-      console.log("saved");
       res.status(201).json({ message: "Answer saved successfully" });
     }
   } catch (error) {
@@ -829,7 +812,6 @@ app.get("/answer/:questionId", authenticateJwt, async (req, res) => {
   try {
     // Find the answer for the specified question and user
     const answer = await Answer.findOne({ questionId, userId });
-    console.log(answer);
     if (!answer) {
       return res.status(404).json({
         message: "Answer not found for the specified question and user.",
@@ -1000,7 +982,6 @@ app.get("/results/:uniqueCode", authenticateJwt, async (req, res) => {
   try {
     const { uniqueCode } = req.params;
     const userId = req.user.id; // Extract user ID from JWT token
-    console.log(uniqueCode);
     // Check if there's a record with the unique code and user ID
     const existingResult = await Result.findOne({ uniqueCode, userId });
 
@@ -1116,7 +1097,6 @@ app.get("/marks/:userId/:questionId", async (req, res) => {
   try {
     const { userId, questionId } = req.params;
     // Find the marks and remarks for the given userId and questionId
-    console.log(userId, questionId);
     const marks = await Marks.findOne({ userId, questionId }, "marks remarks");
 
     if (!marks) {
@@ -1127,7 +1107,6 @@ app.get("/marks/:userId/:questionId", async (req, res) => {
 
     // Return the marks and remarks
     res.status(200).json({ marks });
-    console.log("final", { marks });
   } catch (error) {
     console.error("Error fetching marks and remarks:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -1229,7 +1208,6 @@ app.get("/quiz/title/:uniqueCode", async (req, res) => {
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
-    console.log(quiz.title);
     res.json({ title: quiz.title });
   } catch (error) {
     console.error("Error fetching quiz title:", error);
@@ -1652,7 +1630,6 @@ app.get("/quiz/feedback/:uniqueCode", async (req, res) => {
 
     // Extract feedbacks from the quiz
     const { feedback } = quiz;
-    console.log({ feedback });
     res.json({ feedback });
   } catch (error) {
     console.error("Error fetching feedbacks:", error);
@@ -1702,7 +1679,6 @@ app.get("/total-marks/:uniqueCode", async (req, res) => {
       totalMarks: totalMarksMap[user._id], // Get total marks from the map
       marksForEachQuestion: userMarksMap[user._id], // Get marks for each question from the map
     }));
-    console.log("response", responseData);
     res.json(responseData);
   } catch (error) {
     console.error("Error calculating total marks:", error);
@@ -1732,10 +1708,12 @@ app.post(
       const userId = req.user.id;
       const uniqueCode = req.params.uniqueCode;
       // Check if the user has already attempted the quiz
-      const quiz = await Quiz.findOne({ uniqueCode: req.params.uniqueCode });
+      const quiz = await Quiz.findOne({ uniqueCode });
+
       if (!quiz) {
         return res.status(404).json({ error: "Quiz not found" });
       }
+
       if (quiz.attempted.includes(userId)) {
         return res
           .status(400)
@@ -1755,6 +1733,32 @@ app.post(
       res.json({ message: "Quiz attempt recorded successfully" });
     } catch (error) {
       console.error("Error recording quiz attempt:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+app.get(
+  "/quizzes/user/:uniqueCode/attempted",
+  authenticateJwt,
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const uniqueCode = req.params.uniqueCode;
+      // Find the quiz using $exists to check if the field exists
+      const quiz = await Quiz.findOne({
+        uniqueCode,
+      });
+
+      if (!quiz) {
+        return res.json({ attempted: false }); // Quiz not found or "attempted" field doesn't exist
+      }
+
+      // Check if the userId is present in the attempted array
+      const attempted = quiz.attempted.includes(userId);
+      res.json({ attempted });
+    } catch (error) {
+      console.error("Error checking attempted users:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
@@ -1984,7 +1988,6 @@ app.get("/:uniqueCode/user/rank", authenticateJwt, async (req, res) => {
         rank++;
       }
     }
-    console.log({ rank });
     res.json({ rank });
   } catch (error) {
     console.error("Error fetching rank:", error);
@@ -2000,11 +2003,9 @@ app.get("/userId", authenticateJwt, (req, res) => {
 app.get("/quiz/:uniqueCode/comments", authenticateJwt, async (req, res) => {
   const { uniqueCode } = req.params;
   const userId = req.user.id;
-  console.log("vodfmbdfbmdfkbmdfxmk");
   try {
     // Find all marks for the given unique code and user ID
     const marks = await MarksTrial.find({ uniqueCode, userId });
-    console.log({ marks });
     // Extract comments from marks
     const comments = marks.map((mark) => ({
       questionId: mark.questionId,
@@ -2014,8 +2015,6 @@ app.get("/quiz/:uniqueCode/comments", authenticateJwt, async (req, res) => {
       // If comments are not present, send an empty string
       res.json("");
     } else {
-      // If comments are present, send the comments array
-      console.log(comments);
       res.json(comments);
     }
   } catch (error) {
@@ -2091,7 +2090,6 @@ app.get(
   async (req, res) => {
     try {
       const workspaceId = req.params.workspaceId;
-      console.log({ workspaceId });
       // Find the workspace by ID
       const workspace = await Workspace.findById(workspaceId);
 
@@ -2104,7 +2102,6 @@ app.get(
 
       // Fetch details of quizzes using the extracted IDs
       const quizzes = await Quiz.find({ _id: { $in: quizIds } });
-      console.log({ quizzes });
       res.status(200).json({ quizzes });
     } catch (error) {
       console.error("Error fetching quizzes:", error.message);
@@ -2133,6 +2130,66 @@ app.put("/quizzes/:quizId/publish", async (req, res) => {
   } catch (error) {
     console.error("Error publishing/unpublishing quiz:", error.message);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/:uniquecode/fixauto", authenticateJwt, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const uniqueCode = req.params.uniquecode;
+
+    // Step 1: Load all the answers of the particular user
+    const userAnswers = await Answer.find({ userId, uniqueCode });
+
+    // Step 2: Retrieve the quiz details corresponding to the provided uniqueCode
+    const quiz = await Quiz.findOne({ uniqueCode });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    // Step 3: Match each question's answer with the user's answer and mark them accordingly
+    const marksTrials = [];
+
+    for (const question of quiz.questions) {
+      const userAnswer = userAnswers.find(
+        (answer) => answer.questionId === question._id.toString()
+      );
+
+      const marksTrial = {
+        userId,
+        uniqueCode,
+        questionId: question._id,
+        marks: null,
+        comments: "NA",
+        isCorrect: false,
+      };
+
+      if (userAnswer) {
+        // If user attempted the question
+        if (question.correctOptions.includes(parseInt(userAnswer.answer))) {
+          marksTrial.marks = question.marks;
+          marksTrial.isCorrect = true;
+        } else {
+          marksTrial.marks = 0;
+          marksTrial.isCorrect = false;
+        }
+      } else {
+        // If user didn't attempt the question
+        marksTrial.marks = null;
+        marksTrial.isCorrect = false;
+      }
+
+      marksTrials.push(marksTrial);
+    }
+
+    // Step 4: Save the results in the markstrialSchema
+    await MarksTrial.insertMany(marksTrials);
+
+    res.status(200).json({ message: "Auto-fix completed successfully" });
+  } catch (error) {
+    console.error("Error fixing auto:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

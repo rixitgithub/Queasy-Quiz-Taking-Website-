@@ -31,29 +31,32 @@ const Question = () => {
   const { uniqueCode, questionId } = useParams();
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && exitPopupAttempts > 0) {
-        exitPopupAttempts--; // Decrement attempts when visibility is gone
-        setShowExitPopup(true);
-        console.log("Exit popup shown");
+    const fetchAttempt = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:1234/quizzes/user/${uniqueCode}/attempted`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch attempted quiz status");
+        }
+
+        const data = await response.json();
+        setAttemptedQuiz(data.attempted);
+      } catch (error) {
+        console.error("Error fetching attempted quiz status:", error.message);
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    fetchAttempt();
   }, []);
-
-  const handleCloseExitPopup = () => {
-    setShowExitPopup(false);
-    console.log("Exit popup closed");
-  };
-
-  const handleContinue = () => {
-    handleCloseExitPopup();
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,10 +72,6 @@ const Question = () => {
         );
         const data = await response.json();
         console.log("results", data);
-        if (response.ok) {
-          setAttemptedQuiz(data.attempted);
-        }
-
         if (!data.attempted) {
           const questionResponse = await fetch(
             `http://localhost:1234/quiz/${uniqueCode}/question/${questionId}`,
@@ -201,8 +200,18 @@ const Question = () => {
           }
         );
 
+        // Add your additional request here
+        await fetch(`http://localhost:1234/${uniqueCode}/fixauto`, {
+          method: "POST", // or any other method you need
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          // Add any necessary body data here
+        });
+
         if (quiz && quiz.autoAssignMarks) {
-          window.location.href = `/quiz/${uniqueCode}/result`;
+          window.location.href = `/quiz/${uniqueCode}/end`;
         } else {
           window.location.href = `/quiz/${uniqueCode}/end`;
           setAttemptedQuiz(true);
@@ -286,221 +295,210 @@ const Question = () => {
         minHeight: "100vh",
       }}
     >
-      <div
-        style={{
-          maxWidth: "600px",
-          width: "100%",
-          padding: "20px",
-          border: "1px solid #ccc",
-          borderRadius: "10px",
-        }}
-      >
-        <div style={{ position: "relative" }}>
-          <Dialog open={showPopup} onClose={() => {}} disableBackdropClick>
-            <DialogTitle>Time's up for this question!</DialogTitle>
-            <DialogContent>
-              <Typography variant="body1">
-                You ran out of time for this question.
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handlePreviousQuestion} color="primary">
-                Previous Question
-              </Button>
-              <Button onClick={handleNextQuestion} color="primary">
-                Next Question
-              </Button>
-            </DialogActions>
-          </Dialog>
+      {/* Display attempted quiz message if already attempted */}
+      {attemptedQuiz ? (
+        <Typography>You have already attempted this quiz.</Typography>
+      ) : (
+        <div
+          style={{
+            maxWidth: "600px",
+            width: "100%",
+            padding: "20px",
+            border: "1px solid #ccc",
+            borderRadius: "10px",
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <Dialog open={showPopup} onClose={() => {}} disableBackdropClick>
+              <DialogTitle>Time's up for this question!</DialogTitle>
+              <DialogContent>
+                <Typography variant="body1">
+                  You ran out of time for this question.
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handlePreviousQuestion} color="primary">
+                  Previous Question
+                </Button>
+                <Button onClick={handleNextQuestion} color="primary">
+                  Next Question
+                </Button>
+              </DialogActions>
+            </Dialog>
 
-          {remainingTime !== null && (
-            <div
-              style={{
-                position: "absolute",
-                top: "10%",
-                left: "96%",
-                transform: "translate(-50%, -50%)",
-                textAlign: "center",
-              }}
-            >
-              <CircularProgress
-                variant="determinate"
-                value={(100 - (remainingTime / 60) * 100) % 100} // Modify the value calculation
-                size={50}
-                thickness={4}
-                style={{ marginRight: "0px", color: getProgressColor() }}
-              />
-              <Typography
-                variant="h6"
+            {remainingTime !== null && (
+              <div
                 style={{
                   position: "absolute",
-                  top: "50%",
-                  left: "50%",
+                  top: "10%",
+                  left: "96%",
                   transform: "translate(-50%, -50%)",
+                  textAlign: "center",
                 }}
               >
-                {remainingTime}
-              </Typography>
-            </div>
-          )}
-
-          {attemptedQuiz ? (
-            <Typography>You have already attempted this quiz.</Typography>
-          ) : loading ? (
-            <Typography>Loading question...</Typography>
-          ) : (
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ marginBottom: "20px" }}>
+                <CircularProgress
+                  variant="determinate"
+                  value={(100 - (remainingTime / 60) * 100) % 100} // Modify the value calculation
+                  size={50}
+                  thickness={4}
+                  style={{ marginRight: "0px", color: getProgressColor() }}
+                />
                 <Typography
-                  variant="h5"
-                  style={{ textAlign: "left", marginRight: "7rem" }}
+                  variant="h6"
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                  }}
                 >
-                  Question {questionIds.indexOf(questionId) + 1}:{" "}
-                  {question && question.text}
+                  {remainingTime}
                 </Typography>
               </div>
-              {question.type === "qna" ? ( // Conditionally render text field for qna type
-                <TextField
-                  label="Your Answer"
-                  multiline
-                  rows={4}
-                  variant="outlined"
-                  fullWidth
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  style={{ marginBottom: "20px" }}
-                />
-              ) : (
-                options &&
-                options.length > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      marginBottom: "20px",
-                    }}
+            )}
+
+            {loading ? (
+              <Typography>Loading question...</Typography>
+            ) : (
+              <div style={{ marginBottom: "20px" }}>
+                <div style={{ marginBottom: "20px" }}>
+                  <Typography
+                    variant="h5"
+                    style={{ textAlign: "left", marginRight: "7rem" }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        width: "50%",
-                        marginRight: "10px",
-                      }}
-                    >
-                      {options
-                        .slice(0, options.length / 2)
-                        .map((option, index) => (
-                          <div key={index} style={{ marginBottom: "10px" }}>
-                            <input
-                              type="radio"
-                              id={`option-${index}`}
-                              name="options"
-                              checked={
-                                originalOptions.indexOf(option) ===
-                                parseInt(answer)
-                              }
-                              disabled={isTimeUp}
-                              onChange={() =>
-                                setAnswer(originalOptions.indexOf(option))
-                              }
-                              style={{ marginRight: "10px" }}
-                            />
-                            <label
-                              htmlFor={`option-${index}`}
-                              style={{ fontSize: "16px" }}
-                            >
-                              {option}
-                            </label>
-                          </div>
-                        ))}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        width: "50%",
-                        marginLeft: "10px",
-                      }}
-                    >
-                      {options
-                        .slice(options.length / 2)
-                        .map((option, index) => (
-                          <div key={index} style={{ marginBottom: "10px" }}>
-                            <input
-                              type="radio"
-                              id={`option-${index}`}
-                              name="options"
-                              checked={
-                                originalOptions.indexOf(option) ===
-                                parseInt(answer)
-                              }
-                              disabled={isTimeUp}
-                              onChange={() =>
-                                setAnswer(originalOptions.indexOf(option))
-                              }
-                              style={{ marginRight: "10px" }}
-                            />
-                            <label
-                              htmlFor={`option-${index}`}
-                              style={{ fontSize: "16px" }}
-                            >
-                              {option}
-                            </label>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )
-              )}
-              <div style={{ textAlign: "center" }}>
-                {questionIds.indexOf(questionId) > 0 && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handlePreviousQuestion}
-                    style={{ marginRight: "10px" }}
-                  >
-                    Previous
-                  </Button>
-                )}
-                {questionIds.indexOf(questionId) === questionIds.length - 1 ? (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleNextQuestion}
-                  >
-                    End Quiz
-                  </Button>
+                    Question {questionIds.indexOf(questionId) + 1}:{" "}
+                    {question && question.text}
+                  </Typography>
+                </div>
+                {question.type === "qna" ? ( // Conditionally render text field for qna type
+                  <TextField
+                    label="Your Answer"
+                    multiline
+                    rows={4}
+                    variant="outlined"
+                    fullWidth
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    style={{ marginBottom: "20px" }}
+                  />
                 ) : (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleNextQuestion}
-                  >
-                    Next
-                  </Button>
+                  options &&
+                  options.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          width: "50%",
+                          marginRight: "10px",
+                        }}
+                      >
+                        {options
+                          .slice(0, options.length / 2)
+                          .map((option, index) => (
+                            <div key={index} style={{ marginBottom: "10px" }}>
+                              <input
+                                type="radio"
+                                id={`option-${index}`}
+                                name="options"
+                                checked={
+                                  originalOptions.indexOf(option) ===
+                                  parseInt(answer)
+                                }
+                                disabled={isTimeUp}
+                                onChange={() =>
+                                  setAnswer(originalOptions.indexOf(option))
+                                }
+                                style={{ marginRight: "10px" }}
+                              />
+                              <label
+                                htmlFor={`option-${index}`}
+                                style={{ fontSize: "16px" }}
+                              >
+                                {option}
+                              </label>
+                            </div>
+                          ))}
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          width: "50%",
+                          marginLeft: "10px",
+                        }}
+                      >
+                        {options
+                          .slice(options.length / 2)
+                          .map((option, index) => (
+                            <div key={index} style={{ marginBottom: "10px" }}>
+                              <input
+                                type="radio"
+                                id={`option-${index}`}
+                                name="options"
+                                checked={
+                                  originalOptions.indexOf(option) ===
+                                  parseInt(answer)
+                                }
+                                disabled={isTimeUp}
+                                onChange={() =>
+                                  setAnswer(originalOptions.indexOf(option))
+                                }
+                                style={{ marginRight: "10px" }}
+                              />
+                              <label
+                                htmlFor={`option-${index}`}
+                                style={{ fontSize: "16px" }}
+                              >
+                                {option}
+                              </label>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )
                 )}
+                <div style={{ textAlign: "center" }}>
+                  {questionIds.indexOf(questionId) > 0 && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handlePreviousQuestion}
+                      style={{ marginRight: "10px" }}
+                    >
+                      Previous
+                    </Button>
+                  )}
+                  {questionIds.indexOf(questionId) ===
+                  questionIds.length - 1 ? (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleNextQuestion}
+                    >
+                      End Quiz
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleNextQuestion}
+                    >
+                      Next
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-      {/* Exit popup dialog */}
-      <Dialog open={showExitPopup} onClose={handleCloseExitPopup}>
-        <DialogTitle>Invalid Activity Detected</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            You have {exitPopupAttempts} chances left. Please remain on this
-            window to successfully complete your quiz.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleContinue} color="primary">
-            Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      )}
     </div>
   );
 };
