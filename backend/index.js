@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -6,8 +7,9 @@ const bcryptjs = require("bcryptjs");
 const shortid = require("shortid");
 
 const app = express();
-const PORT = 1234;
-const SECRET = "SECr3t";
+const PORT = process.env.PORT || 1234;
+const SECRET = process.env.SECRET;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
@@ -29,10 +31,10 @@ const authenticateJwt = (req, res, next) => {
   }
 };
 
-mongoose.connect(
-  "mongodb+srv://irishittiwari:Rishittiwarim2004@cluster0.t56rdzz.mongodb.net/authentication",
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const userSchema = new mongoose.Schema({
   fname: { type: String, required: true },
