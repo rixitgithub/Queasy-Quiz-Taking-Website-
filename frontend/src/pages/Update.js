@@ -24,6 +24,7 @@ import { alpha } from "@mui/material";
 import AppAppBar from "../components/AppAppBar";
 import { CheckCircleOutline, RadioButtonUnchecked } from "@mui/icons-material";
 import Footer from "../components/Footer";
+import { BASE_URL } from "./config";
 
 import Divider from "@mui/material/Divider";
 
@@ -55,15 +56,12 @@ const UpdateQuiz = () => {
   useEffect(() => {
     const fetchQuizDetails = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         console.log("this is the update data", data);
         setQuiz(data);
@@ -158,7 +156,7 @@ const UpdateQuiz = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`http://localhost:1234/quiz/${uniqueCode}`, {
+      const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

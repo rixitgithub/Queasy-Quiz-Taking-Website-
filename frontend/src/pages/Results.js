@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
+import { BASE_URL } from "./config";
 
 import { alpha } from "@mui/material";
 import AppAppBar from "../components/AppAppBar";
@@ -19,9 +20,7 @@ const AnswersByQuiz = () => {
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/answers`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/answers`);
         const data = await response.json();
         const uniqueUserIds = [
           ...new Set(data.answers.map((answer) => answer.userId)),
@@ -39,7 +38,7 @@ const AnswersByQuiz = () => {
 
   const assignMarks = async (answerId, marks) => {
     try {
-      const response = await fetch("http://localhost:1234/results", {
+      const response = await fetch(`${BASE_URL}/results`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,16 +63,13 @@ const AnswersByQuiz = () => {
 
   const handleViewResults = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:1234/quiz/${uniqueCode}/isChecked`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ isChecked: true }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/isChecked`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isChecked: true }),
+      });
       if (response.ok) {
         console.log("Quiz results viewed successfully");
         // You can add additional logic here if needed

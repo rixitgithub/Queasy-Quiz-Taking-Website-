@@ -20,6 +20,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { alpha } from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "./config";
 
 const EndQuiz = () => {
   const navigate = useNavigate();
@@ -37,16 +38,13 @@ const EndQuiz = () => {
     setLoading(true); // Start loading indicator
     try {
       // Send a POST request to save the feedback with the unique code in the params
-      const response = await fetch(
-        `http://localhost:1234/quiz/feedback/${uniqueCode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ feedback }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/quiz/feedback/${uniqueCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ feedback }),
+      });
       if (!response.ok) {
         throw new Error("Failed to save feedback");
       }

@@ -21,6 +21,7 @@ import { alpha } from "@mui/material";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "./config";
 
 const QuizAttemptsPage = () => {
   const [quizAttempts, setQuizAttempts] = useState([]);
@@ -34,7 +35,7 @@ const QuizAttemptsPage = () => {
   useEffect(() => {
     const fetchQuizAttempts = async () => {
       try {
-        const response = await fetch("http://localhost:1234/quizzes/user", {
+        const response = await fetch(`${BASE_URL}/quizzes/user`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -67,7 +68,7 @@ const QuizAttemptsPage = () => {
   useEffect(() => {
     const userDetails = async () => {
       try {
-        const response = await fetch("http://localhost:1234/userId", {
+        const response = await fetch(`${BASE_URL}/userId`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

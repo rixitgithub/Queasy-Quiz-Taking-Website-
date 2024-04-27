@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { BASE_URL } from "./config";
 
 const QuizDetails = () => {
   const { quizId } = useParams();
@@ -18,7 +19,7 @@ const QuizDetails = () => {
   useEffect(() => {
     const fetchQuizDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:1234/quiz/${quizId}`, {
+        const response = await fetch(`${BASE_URL}/quiz/${quizId}`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -36,7 +37,7 @@ const QuizDetails = () => {
 
   const handleDeleteQuiz = async () => {
     try {
-      const response = await fetch(`http://localhost:1234/quiz/${quizId}`, {
+      const response = await fetch(`${BASE_URL}/quiz/${quizId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

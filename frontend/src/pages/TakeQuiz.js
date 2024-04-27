@@ -15,6 +15,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import AppAppBar from "../components/AppAppBar";
 import Question from "./Question.js";
 import { alpha } from "@mui/material";
+import { BASE_URL } from "./config";
 
 import getLPTheme from "../getLPTheme";
 
@@ -34,9 +35,7 @@ const TakeQuiz = () => {
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/answers`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/answers`);
         const data = await response.json();
         const uniqueUserIds = [
           ...new Set(data.answers.map((answer) => answer.userId)),
@@ -54,7 +53,7 @@ const TakeQuiz = () => {
 
   const assignMarks = async (answerId, marks) => {
     try {
-      const response = await fetch("http://localhost:1234/results", {
+      const response = await fetch(`${BASE_URL}/results`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,16 +80,13 @@ const TakeQuiz = () => {
 
   const handleViewResults = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:1234/quiz/${uniqueCode}/isChecked`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ isChecked: !isChecked }), // Toggle the isChecked value
-        }
-      );
+      const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/isChecked`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isChecked: !isChecked }), // Toggle the isChecked value
+      });
       if (response.ok) {
         console.log("Quiz results viewed successfully");
         // Toggle the state
@@ -125,15 +121,12 @@ const TakeQuiz = () => {
   useEffect(() => {
     const fetchQuizDetails = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/start`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/start`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         setQuizDetails(data);
         setIsOwner(data.isOwner);
@@ -159,7 +152,7 @@ const TakeQuiz = () => {
       try {
         const token = localStorage.getItem("token");
         for (const questionId of questionIds) {
-          await fetch("http://localhost:1234/time-remaining", {
+          await fetch(`${BASE_URL}/time-remaining`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

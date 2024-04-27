@@ -21,6 +21,7 @@ import AppAppBar from "../components/AppAppBar";
 import Footer from "../components/Footer";
 import Chart from "react-apexcharts";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "./config";
 
 export default function UserAnalysis() {
   const [mode, setMode] = useState("light");
@@ -181,9 +182,7 @@ export default function UserAnalysis() {
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/answers`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/answers`);
         const data = await response.json();
         console.log("this is fuck data", data);
         setAnswerData(data.answers);
@@ -203,7 +202,7 @@ export default function UserAnalysis() {
       try {
         const promises = answers.map(async (answer) => {
           const response = await fetch(
-            `http://localhost:1234/questions/${answer.questionId}`
+            `${BASE_URL}/questions/${answer.questionId}`
           );
           const data = await response.json();
           return {
@@ -228,7 +227,7 @@ export default function UserAnalysis() {
       try {
         const token = localStorage.getItem("token");
         const marksResponse = await fetch(
-          `http://localhost:1234/marks-stats/${uniqueCode}`,
+          `${BASE_URL}/marks-stats/${uniqueCode}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -326,7 +325,7 @@ export default function UserAnalysis() {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/time-distribution`,
+          `${BASE_URL}/quiz/${uniqueCode}/time-distribution`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -397,7 +396,7 @@ export default function UserAnalysis() {
 
         // Fetch question analysis data
         const questionAnalysisResponse = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/questionnum`,
+          `${BASE_URL}/quiz/${uniqueCode}/questionnum`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -420,7 +419,7 @@ export default function UserAnalysis() {
 
         // Fetch score data
         const scoreResponse = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/score`,
+          `${BASE_URL}/quiz/${uniqueCode}/score`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -460,7 +459,7 @@ export default function UserAnalysis() {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/time-distribution`,
+          `${BASE_URL}/quiz/${uniqueCode}/time-distribution`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -533,7 +532,7 @@ export default function UserAnalysis() {
       try {
         // Fetch marks for each question
         const marksResponse = await fetch(
-          `http://localhost:1234/${uniqueCode}/user/marks`,
+          `${BASE_URL}/${uniqueCode}/user/marks`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -553,7 +552,7 @@ export default function UserAnalysis() {
 
         // Fetch user's rank
         const rankResponse = await fetch(
-          `http://localhost:1234/${uniqueCode}/user/rank`,
+          `${BASE_URL}/${uniqueCode}/user/rank`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -585,7 +584,7 @@ export default function UserAnalysis() {
         const token = localStorage.getItem("token");
         console.log("boom boom");
         const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/comments`,
+          `${BASE_URL}/quiz/${uniqueCode}/comments`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -627,9 +626,7 @@ export default function UserAnalysis() {
   useEffect(() => {
     const fetchQuizTitle = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/title/${uniqueCode}`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/title/${uniqueCode}`);
         if (!response.ok) {
           throw new Error("Failed to fetch quiz title");
         }

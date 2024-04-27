@@ -11,8 +11,7 @@ import {
   TextField,
 } from "@mui/material";
 
-// Global variable to store the remaining attempts
-let exitPopupAttempts = 3;
+import { BASE_URL } from "./config";
 
 const Question = () => {
   const [showExitPopup, setShowExitPopup] = useState(false);
@@ -34,7 +33,7 @@ const Question = () => {
     const fetchAttempt = async () => {
       try {
         const response = await fetch(
-          `http://localhost:1234/quizzes/user/${uniqueCode}/attempted`,
+          `${BASE_URL}/quizzes/user/${uniqueCode}/attempted`,
           {
             method: "GET",
             headers: {
@@ -61,20 +60,17 @@ const Question = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/results/${uniqueCode}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/results/${uniqueCode}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         console.log("results", data);
         if (!data.attempted) {
           const questionResponse = await fetch(
-            `http://localhost:1234/quiz/${uniqueCode}/question/${questionId}`,
+            `${BASE_URL}/quiz/${uniqueCode}/question/${questionId}`,
             {
               method: "GET",
               headers: {
@@ -88,7 +84,7 @@ const Question = () => {
           setQuestionIds(questionData.questionIds);
 
           const timeResponse = await fetch(
-            `http://localhost:1234/time-remaining/${questionId}`,
+            `${BASE_URL}/time-remaining/${questionId}`,
             {
               method: "GET",
               headers: {
@@ -100,7 +96,7 @@ const Question = () => {
           setRemainingTime(timeData.remainingTime);
 
           const answerResponse = await fetch(
-            `http://localhost:1234/answer/${questionId}`,
+            `${BASE_URL}/answer/${questionId}`,
             {
               method: "GET",
               headers: {
@@ -152,7 +148,7 @@ const Question = () => {
   const saveAnswer = async () => {
     try {
       const answerToSend = answer !== "" ? answer : null; // Check if answer is not empty
-      await fetch(`http://localhost:1234/${uniqueCode}/save-answer`, {
+      await fetch(`${BASE_URL}/${uniqueCode}/save-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +167,7 @@ const Question = () => {
 
   const handleNextQuestion = async () => {
     try {
-      await fetch(`http://localhost:1234/time-remaining/${questionId}`, {
+      await fetch(`${BASE_URL}/time-remaining/${questionId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -189,19 +185,16 @@ const Question = () => {
 
       if (currentIndex === questionIds.length - 1) {
         // Send a backend request to record quiz attempt when reaching the end
-        await fetch(
-          `http://localhost:1234/quizzes/user/${uniqueCode}/attempt`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        await fetch(`${BASE_URL}/quizzes/user/${uniqueCode}/attempt`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
         // Add your additional request here
-        await fetch(`http://localhost:1234/${uniqueCode}/fixauto`, {
+        await fetch(`${BASE_URL}/${uniqueCode}/fixauto`, {
           method: "POST", // or any other method you need
           headers: {
             "Content-Type": "application/json",
@@ -234,7 +227,7 @@ const Question = () => {
       return;
     } else {
       try {
-        await fetch(`http://localhost:1234/time-remaining/${questionId}`, {
+        await fetch(`${BASE_URL}/time-remaining/${questionId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -246,7 +239,7 @@ const Question = () => {
         });
 
         const timeResponse = await fetch(
-          `http://localhost:1234/time-remaining/${prevQuestionId}`,
+          `${BASE_URL}/time-remaining/${prevQuestionId}`,
           {
             method: "GET",
             headers: {

@@ -7,6 +7,7 @@ import {
   Box,
   Button,
 } from "@mui/material";
+import { BASE_URL } from "./config";
 
 const CalculateMarksPage = () => {
   const [totalMarks, setTotalMarks] = useState(null);
@@ -17,16 +18,13 @@ const CalculateMarksPage = () => {
   useEffect(() => {
     const fetchMarks = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/marks`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/marks`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         console.log(data);
         if (response.ok) {

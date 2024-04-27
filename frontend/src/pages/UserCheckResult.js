@@ -21,6 +21,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CheckIcon from "@mui/icons-material/Check"; // Import CheckIcon for saved indicator
 import RefreshIcon from "@mui/icons-material/Refresh"; // Import RefreshIcon for changed indicator
+import { BASE_URL } from "./config";
 
 const UserCheckResult = () => {
   const { uniqueCode, userId } = useParams();
@@ -55,9 +56,7 @@ const UserCheckResult = () => {
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/answers`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/answers`);
         const data = await response.json();
         const uniqueUserIds = [
           ...new Set(data.answers.map((answer) => answer.userId)),
@@ -83,7 +82,7 @@ const UserCheckResult = () => {
         };
 
         const quizResponse = await fetch(
-          `http://localhost:1234/quiz/title/${uniqueCode}`,
+          `${BASE_URL}/quiz/title/${uniqueCode}`,
           {
             headers: headers,
           }
@@ -94,12 +93,9 @@ const UserCheckResult = () => {
         const quizData = await quizResponse.json();
         setQuizTitle(quizData.title);
 
-        const userResponse = await fetch(
-          `http://localhost:1234/user/${userId}`,
-          {
-            headers: headers,
-          }
-        );
+        const userResponse = await fetch(`${BASE_URL}/user/${userId}`, {
+          headers: headers,
+        });
         if (!userResponse.ok) {
           throw new Error("Failed to fetch user details");
         }
@@ -125,7 +121,7 @@ const UserCheckResult = () => {
     const fetchquestionIds = async () => {
       try {
         const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/user/${userId}`
+          `${BASE_URL}/quiz/${uniqueCode}/user/${userId}`
         );
         const data = await response.json();
         setQuestionIds(data.questionIds);
@@ -142,9 +138,7 @@ const UserCheckResult = () => {
   useEffect(() => {
     const fetchAnswers = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/answers`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${uniqueCode}/answers`);
         const data = await response.json();
         setAnswers(data.answers);
         setLoading(false);
@@ -162,7 +156,7 @@ const UserCheckResult = () => {
       try {
         const promises = answers.map(async (answer) => {
           const response = await fetch(
-            `http://localhost:1234/questions/${answer.questionId}`
+            `${BASE_URL}/questions/${answer.questionId}`
           );
           const data = await response.json();
           return {
@@ -242,7 +236,7 @@ const UserCheckResult = () => {
       };
 
       // Make a POST request to send marks, comments, and isCorrect to the backend
-      const response = await fetch("http://localhost:1234/saveMarks", {
+      const response = await fetch(`${BASE_URL}/saveMarks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -312,16 +306,13 @@ const UserCheckResult = () => {
           throw new Error("Token not found");
         }
 
-        const response = await fetch(
-          `http://localhost:1234/user/${uniqueCode}/owner`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/user/${uniqueCode}/owner`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch data");

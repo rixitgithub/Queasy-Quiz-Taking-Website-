@@ -20,6 +20,7 @@ import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
+import { BASE_URL } from "./config";
 
 import { useMediaQuery, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -48,16 +49,13 @@ const QuizAnalysis = () => {
           throw new Error("Token not found");
         }
 
-        const response = await fetch(
-          `http://localhost:1234/user/${uniqueCode}/owner`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/user/${uniqueCode}/owner`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch data");
@@ -250,9 +248,7 @@ const QuizAnalysis = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/total-marks/${uniqueCode}`
-        );
+        const response = await fetch(`${BASE_URL}/total-marks/${uniqueCode}`);
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
         }
@@ -272,9 +268,7 @@ const QuizAnalysis = () => {
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/feedback/${uniqueCode}`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/feedback/${uniqueCode}`);
         if (!response.ok) {
           throw new Error("Failed to fetch feedbacks");
         }
@@ -293,7 +287,7 @@ const QuizAnalysis = () => {
     const fetchMarksAnalysisData = async () => {
       try {
         const response = await fetch(
-          `http://localhost:1234/quiz/${uniqueCode}/marks-analysis`
+          `${BASE_URL}/quiz/${uniqueCode}/marks-analysis`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch marks analysis data");
@@ -318,9 +312,7 @@ const QuizAnalysis = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const marksResponse = await fetch(
-          `http://localhost:1234/marks/${uniqueCode}`
-        );
+        const marksResponse = await fetch(`${BASE_URL}/marks/${uniqueCode}`);
         const marksData = await marksResponse.json();
         if (!marksResponse.ok || marksData.length === 0) {
           throw new Error("Failed to fetch marks data");
@@ -541,9 +533,7 @@ const QuizAnalysis = () => {
   useEffect(() => {
     const fetchQuizTitle = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/title/${uniqueCode}`
-        );
+        const response = await fetch(`${BASE_URL}/quiz/title/${uniqueCode}`);
         if (!response.ok) {
           throw new Error("Failed to fetch quiz title");
         }

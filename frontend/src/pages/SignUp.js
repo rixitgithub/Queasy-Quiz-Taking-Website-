@@ -16,6 +16,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { BASE_URL } from "./config";
 
 import { alpha } from "@mui/material";
 
@@ -51,7 +52,7 @@ export default function SignUp() {
       isCreator: isCreator, // Include the selected option in the request
     };
 
-    fetch("http://localhost:1234/users/signup", {
+    fetch(`${BASE_URL}/users/signup`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

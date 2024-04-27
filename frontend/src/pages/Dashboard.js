@@ -47,6 +47,7 @@ import ShareIcon from "@mui/icons-material/Share";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import UserAttempts from "./UserAttempts";
+import { BASE_URL } from "./config";
 
 export default function SignIn() {
   const [mode, setMode] = useState("light");
@@ -86,7 +87,7 @@ export default function SignIn() {
           throw new Error("Token not found");
         }
 
-        const response = await fetch("http://localhost:1234/users/isCreator", {
+        const response = await fetch(`${BASE_URL}/users/isCreator`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -142,7 +143,7 @@ export default function SignIn() {
 
   const fetchWorkspaces = async () => {
     try {
-      const response = await fetch("http://localhost:1234/workspaces", {
+      const response = await fetch(`${BASE_URL}/workspaces`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -157,7 +158,7 @@ export default function SignIn() {
 
   const handleCreateWorkspace = async () => {
     try {
-      const response = await fetch("http://localhost:1234/workspaces", {
+      const response = await fetch(`${BASE_URL}/workspaces`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +180,7 @@ export default function SignIn() {
   const fetchQuizzes = async (workspaceId) => {
     try {
       const response = await fetch(
-        `http://localhost:1234/workspaces/${workspaceId}/quizzes`,
+        `${BASE_URL}/workspaces/${workspaceId}/quizzes`,
         {
           method: "GET",
           headers: {
@@ -265,16 +266,13 @@ export default function SignIn() {
   const handlePublishQuiz = async (quiz) => {
     try {
       console.log("first quiz", quiz);
-      const response = await fetch(
-        `http://localhost:1234/quizzes/${quiz._id}/publish`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await fetch(`${BASE_URL}/quizzes/${quiz._id}/publish`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       if (response.ok) {
         // Toggle the isLive property of the quiz
         quiz.isLive = !quiz.isLive;
@@ -347,7 +345,7 @@ export default function SignIn() {
       }
 
       const response = await fetch(
-        `http://localhost:1234/quiz/${quiz.uniqueCode}?workspace=${workspace}`,
+        `${BASE_URL}/quiz/${quiz.uniqueCode}?workspace=${workspace}`,
         {
           method: "DELETE",
           headers: {

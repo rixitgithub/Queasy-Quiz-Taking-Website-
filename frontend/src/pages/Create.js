@@ -26,6 +26,7 @@ import { CheckCircleOutline, RadioButtonUnchecked } from "@mui/icons-material";
 import Footer from "../components/Footer";
 
 import Divider from "@mui/material/Divider";
+import { BASE_URL } from "./config";
 
 const CreateQuiz = () => {
   const [title, setTitle] = useState("");
@@ -138,7 +139,7 @@ const CreateQuiz = () => {
         workspaceId: workspaceId, // Include workspaceId in the request body
       };
 
-      const response = await fetch("http://localhost:1234/quizzes", {
+      const response = await fetch(`${BASE_URL}/quizzes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

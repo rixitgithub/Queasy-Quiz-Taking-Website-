@@ -14,6 +14,7 @@ import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQs";
 import Footer from "../components/Footer";
 import getLPTheme from "../getLPTheme";
+import { BASE_URL } from "./config";
 
 export default function LandingPage() {
   const [mode, setMode] = React.useState("light");

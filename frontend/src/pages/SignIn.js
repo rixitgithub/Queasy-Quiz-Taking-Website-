@@ -16,6 +16,7 @@ import getLPTheme from "../getLPTheme";
 import AppAppBar from "../components/AppAppBar";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { alpha } from "@mui/material";
+import { BASE_URL } from "./config.js";
 
 export default function SignIn() {
   const [mode, setMode] = React.useState("light");
@@ -31,7 +32,7 @@ export default function SignIn() {
       password: password,
     };
 
-    fetch("http://localhost:1234/users/login", {
+    fetch(`${BASE_URL}/users/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

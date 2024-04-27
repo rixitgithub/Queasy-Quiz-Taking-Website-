@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "./config";
 
 const Quiz = () => {
   const [questions, setQuestions] = useState([]);
@@ -10,15 +11,12 @@ const Quiz = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1234/quiz/${quizId}/questions`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${BASE_URL}/quiz/${quizId}/questions`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         setQuestions(data.questions);
         // Initialize answers array with empty strings for each question
@@ -52,7 +50,7 @@ const Quiz = () => {
 
   const handleSubmitQuiz = async () => {
     try {
-      const response = await fetch("http://localhost:1234/submit-answer", {
+      const response = await fetch(`${BASE_URL}/submit-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
